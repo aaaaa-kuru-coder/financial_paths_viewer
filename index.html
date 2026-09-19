@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Financial Path & DCA Simulator</title>
+<link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+<header>
+  <div class="wrap topbar">
+    <h1>Financial Path & DCA Simulator</h1>
+    <div id="dropZone" class="drop" tabindex="0">
+      <strong>CSVをドロップ / クリックして選択</strong>
+      <span>列: step, path_0, path_1, ...</span>
+      <input id="fileInput" type="file" accept=".csv,text/csv" hidden />
+    </div>
+    <button id="reloadRemoteBtn" title="CONFIG.remoteCsvUrl が有効な場合のみ使用">GitHub CSV再読込</button>
+    <span id="dataStatus" class="pill">データ未読込</span>
+    <span class="sub">処理はブラウザ内。ローカルCSVは外部送信しません。</span>
+  </div>
+</header>
+
+<main class="wrap">
+  <div id="message" class="note"></div>
+
+  <div class="section-title">指数パス</div>
+  <div class="grid">
+    <section class="card">
+      <div class="cardhead">
+        <h2>指数推移 — サンプルパス</h2>
+        <div class="controls">
+          <label>表示本数
+            <input id="indexPathCount" type="number" min="1" max="200" value="30" />
+          </label>
+          <button id="redrawIndexBtn">再描画</button>
+        </div>
+      </div>
+      <div class="cardbody">
+        <canvas id="indexPathsCanvas"></canvas>
+        <div class="note">全パスから均等間隔で抽出して表示します。縦軸は指数水準、横軸はstepです。</div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="cardhead">
+        <h2>指数水準の分布</h2>
+        <div class="controls">
+          <label>評価step
+            <input id="indexDistStep" type="number" min="0" value="0" />
+          </label>
+          <button id="indexFinalBtn">最終step</button>
+        </div>
+      </div>
+      <div class="cardbody">
+        <canvas id="indexHistCanvas"></canvas>
+        <div id="indexStats" class="stats"></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="section-title">積立投資シミュレーション</div>
+  <section class="card full" style="margin-bottom:16px">
+    <div class="cardhead">
+      <h2>積立条件</h2>
+      <span class="mini">為替・税・手数料・配当再投資は考慮しません</span>
+    </div>
+    <div class="cardbody">
+      <div class="controls">
+        <label>頭金
+          <input id="initialAmount" type="number" min="0" step="10000" value="1000000" />
+        </label>
+        <label>積立間隔（日/step）
+          <input id="intervalDays" type="number" min="1" step="1" value="21" />
+        </label>
+        <label>1回あたり積立額
+          <input id="recurringAmount" type="number" min="0" step="1000" value="100000" />
+        </label>
+        <label>初回積立
+          <select id="firstRecurring">
+            <option value="after">interval日後から</option>
+            <option value="now">step 0から</option>
+          </select>
+        </label>
+        <label>表示本数
+          <input id="portfolioPathCount" type="number" min="1" max="200" value="30" />
+        </label>
+        <button id="runPortfolioBtn" class="primary">積立を計算</button>
+      </div>
+      <div id="portfolioAssumption" class="note" style="margin-top:10px"></div>
+    </div>
+  </section>
+
+  <div class="grid">
+    <section class="card">
+      <div class="cardhead">
+        <h2>積立後の資産額 — サンプルパス</h2>
+        <div class="controls">
+          <label>表示
+            <select id="portfolioViewMode">
+              <option value="value">資産額</option>
+              <option value="profit">損益額</option>
+              <option value="ratio">投資元本比</option>
+            </select>
+          </label>
+          <button id="redrawPortfolioBtn">再描画</button>
+        </div>
+      </div>
+      <div class="cardbody">
+        <canvas id="portfolioPathsCanvas"></canvas>
+        <div class="note">各購入時点の指数値で「積立額 ÷ 指数値」の口数を追加購入し、その時点の指数値で時価評価しています。</div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="cardhead">
+        <h2>積立後の資産額分布</h2>
+        <div class="controls">
+          <label>評価step
+            <input id="portfolioDistStep" type="number" min="0" value="0" />
+          </label>
+          <button id="portfolioFinalBtn">最終step</button>
+        </div>
+      </div>
+      <div class="cardbody">
+        <canvas id="portfolioHistCanvas"></canvas>
+        <div id="portfolioStats" class="stats"></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="section-title">チェックポイント比較</div>
+  <section class="card full">
+    <div class="cardhead">
+      <h2>途中時点の分布サマリー</h2>
+      <div class="controls">
+        <label>チェックポイント（step、カンマ区切り）
+          <input id="checkpointSteps" type="text" value="252,1260,2520" style="min-width:240px" />
+        </label>
+        <button id="refreshCheckpointBtn">更新</button>
+      </div>
+    </div>
+    <div class="cardbody">
+      <div style="overflow:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>step</th><th>投資元本</th><th>P5</th><th>P25</th><th>Median</th><th>Mean</th><th>P75</th><th>P95</th>
+            </tr>
+          </thead>
+          <tbody id="checkpointBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <div class="spacer"></div>
+  <p class="note">
+    将来GitHub Pages上のCSVを自動読込したい場合は、<code>config.js</code> 内の <code>CONFIG.remoteCsvUrl</code> を
+    例: <code>"./data/simulation_paths.csv"</code> に変更し、<code>CONFIG.autoLoadRemote = true</code> にしてください。
+    ローカルCSV利用時は、この設定を無効のままにすれば外部通信は発生しません。
+  </p>
+</main>
+
+<script src="./config.js"></script>
+<script src="./app.js"></script>
+</body>
+</html>
