@@ -3,19 +3,31 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Financial Path & DCA Simulator</title>
-  <link rel="stylesheet" href="./style.css" />
+  <title>Financial Path & DCA Simulator v3</title>
+  <link rel="stylesheet" href="./style.css?v=3" />
 </head>
 <body>
 <header>
   <div class="wrap topbar">
     <h1>Financial Path & DCA Simulator</h1>
+
     <div id="dropZone" class="drop" tabindex="0">
       <strong>CSVをドロップ / クリックして選択</strong>
       <span>列: step, path_0, path_1, ...</span>
       <input id="fileInput" type="file" accept=".csv,text/csv" hidden />
     </div>
-    <button id="reloadRemoteBtn" title="CONFIG.remoteCsvUrl が有効な場合のみ使用">GitHub CSV再読込</button>
+
+    <span class="or-text">or</span>
+    <button id="preparedDataBtn" class="prepared-btn">USE prepared data</button>
+
+    <div id="preparedDataPanel" class="prepared-panel hidden">
+      <select id="preparedDataSelect">
+        <option value="">データを選択...</option>
+      </select>
+      <button id="loadPreparedDataBtn" class="primary">読み込む</button>
+      <button id="refreshPreparedDataBtn">一覧更新</button>
+    </div>
+
     <span id="dataStatus" class="pill">データ未読込</span>
     <span class="sub">ローカルCSVはブラウザ内だけで処理します。</span>
   </div>
@@ -27,7 +39,10 @@
   <section class="card full display-settings">
     <div class="cardhead">
       <h2>共通表示設定</h2>
-      <span class="mini">指数・積立の両方に適用</span>
+      <div class="head-actions">
+        <span class="mini">指数・積立の両方に適用</span>
+        <button id="openStyleSettingsBtn">グラフ表示設定</button>
+      </div>
     </div>
     <div class="cardbody">
       <div class="controls">
@@ -48,11 +63,50 @@
         <button id="applyDisplaySettingsBtn" class="primary">表示設定を反映</button>
       </div>
       <div class="note setting-note">
-        信頼区間は各stepにおける全乱数パスの経験分位点から算出します。
-        90%なら下側5%・上側5%を除いた範囲です。統計量は元の価格尺度で算出し、描画座標だけを対数変換します。
+        信頼区間は各stepの全乱数パスの経験分位点から計算します。統計量は元の価格尺度で算出し、描画座標だけを対数変換します。
       </div>
     </div>
   </section>
+
+  <div id="styleSettingsPanel" class="settings-drawer hidden">
+    <div class="settings-drawer-inner">
+      <div class="settings-title-row">
+        <div>
+          <h2>グラフ表示設定</h2>
+          <div class="mini">このブラウザの localStorage に保存されます。他ユーザーとは共有されません。</div>
+        </div>
+        <button id="closeStyleSettingsBtn">閉じる</button>
+      </div>
+
+      <div class="settings-grid">
+        <label>中心パス色<input id="styleCenterColor" type="color" /></label>
+        <label>中心パス太さ<input id="styleCenterWidth" type="number" min="0.5" max="10" step="0.1" /></label>
+
+        <label>前側パス色<input id="styleBeforeColor" type="color" /></label>
+        <label>後側パス色<input id="styleAfterColor" type="color" /></label>
+
+        <label>近接パス透過度1<input id="styleNeighborAlpha1" type="number" min="0" max="1" step="0.05" /></label>
+        <label>遠端パス透過度2<input id="styleNeighborAlpha2" type="number" min="0" max="1" step="0.05" /></label>
+
+        <label>中央値ライン色<input id="styleMedianColor" type="color" /></label>
+        <label>中央値ライン太さ<input id="styleMedianWidth" type="number" min="0.5" max="10" step="0.1" /></label>
+
+        <label>平均値ライン色<input id="styleMeanColor" type="color" /></label>
+        <label>平均値ライン太さ<input id="styleMeanWidth" type="number" min="0.5" max="10" step="0.1" /></label>
+
+        <label>信頼区間色<input id="styleCiColor" type="color" /></label>
+        <label>信頼区間透過度<input id="styleCiAlpha" type="number" min="0" max="1" step="0.05" /></label>
+
+        <label>周辺パス太さ<input id="styleNeighborWidth" type="number" min="0.2" max="5" step="0.1" /></label>
+        <label>積立グラフ上限倍率<input id="stylePortfolioYCapMultiplier" type="number" min="1" max="5" step="0.1" /></label>
+      </div>
+
+      <div class="settings-actions">
+        <button id="saveStyleSettingsBtn" class="primary">保存して適用</button>
+        <button id="resetStyleSettingsBtn">初期値に戻す</button>
+      </div>
+    </div>
+  </div>
 
   <div class="section-title">指数パス</div>
   <div class="grid">
@@ -66,11 +120,8 @@
           <label>中心（○本目）
             <input id="indexCenterPath" type="number" min="1" value="1" />
           </label>
-          <label>前
-            <input id="indexBeforeCount" type="number" min="0" max="100" value="15" />
-          </label>
-          <label>後
-            <input id="indexAfterCount" type="number" min="0" max="100" value="15" />
+          <label>前後の本数
+            <input id="indexNeighborCount" type="number" min="0" max="100" value="15" />
           </label>
           <button id="redrawIndexBtn">再描画</button>
         </div>
@@ -109,6 +160,7 @@
           <span><i class="swatch median"></i>中央値</span>
           <span><i class="swatch mean"></i>平均値</span>
         </div>
+        <div id="indexHistBinInfo" class="bin-info hidden"></div>
         <div id="indexStats" class="stats"></div>
       </div>
     </section>
@@ -148,7 +200,7 @@
       <div class="cardhead chart-head">
         <div>
           <h2>積立後の推移 — 選択パス</h2>
-          <div class="mini">資産額・投資元本比はlog10。損益額は負値対応のsymlog。</div>
+          <div class="mini">資産額・投資元本比はlog10、0や負値を含む場合はsymlog。上限は最終時点の上側信頼限界を基準に抑制。</div>
         </div>
         <div class="controls compact-controls">
           <label>表示
@@ -161,11 +213,8 @@
           <label>中心（○本目）
             <input id="portfolioCenterPath" type="number" min="1" value="1" />
           </label>
-          <label>前
-            <input id="portfolioBeforeCount" type="number" min="0" max="100" value="15" />
-          </label>
-          <label>後
-            <input id="portfolioAfterCount" type="number" min="0" max="100" value="15" />
+          <label>前後の本数
+            <input id="portfolioNeighborCount" type="number" min="0" max="100" value="15" />
           </label>
           <button id="redrawPortfolioBtn">再描画</button>
         </div>
@@ -181,7 +230,6 @@
           <span><i class="swatch ci"></i><span id="portfolioCiLegend">90%区間</span></span>
         </div>
         <div id="portfolioPathSelectionNote" class="note"></div>
-        <div class="note">購入日に「積立額 ÷ その日の指数値」の口数を追加し、各stepの指数値で時価評価します。</div>
       </div>
     </section>
 
@@ -205,6 +253,7 @@
           <span><i class="swatch median"></i>中央値</span>
           <span><i class="swatch mean"></i>平均値</span>
         </div>
+        <div id="portfolioHistBinInfo" class="bin-info hidden"></div>
         <div id="portfolioStats" class="stats"></div>
       </div>
     </section>
@@ -226,13 +275,9 @@
         <table>
           <thead>
             <tr>
-              <th>step</th>
-              <th>投資元本</th>
-              <th id="checkpointLowerHead">P5</th>
-              <th>P25</th>
-              <th>Median</th>
-              <th>Mean</th>
-              <th>P75</th>
+              <th>step</th><th>投資元本</th>
+              <th id="checkpointLowerHead">P5</th><th>P25</th>
+              <th>Median</th><th>Mean</th><th>P75</th>
               <th id="checkpointUpperHead">P95</th>
             </tr>
           </thead>
@@ -244,17 +289,16 @@
 
   <div class="spacer"></div>
   <p class="note">
-    GitHub Pages上の公開用CSVを自動読込する場合は、<code>config.js</code> で
-    <code>autoLoadRemote: true</code> とし、<code>remoteCsvUrl</code> に相対パスを設定してください。
-    ローカルCSV利用時は自動読込を無効のままにすれば、CSV自体の外部送信は行いません。
+    prepared data は <code>simulation_data/manifest.json</code> に一覧を記載します。
+    GitHub Pagesの静的配信だけではフォルダ内ファイルを自動列挙できないため、このmanifest方式を採用しています。
   </p>
 </main>
 
-<script src="./config.js"></script>
-<script src="./utils.js"></script>
-<script src="./data.js"></script>
-<script src="./charts.js"></script>
-<script src="./portfolio.js"></script>
-<script src="./app.js"></script>
+<script src="./config.js?v=3"></script>
+<script src="./utils.js?v=3"></script>
+<script src="./data.js?v=3"></script>
+<script src="./charts.js?v=3"></script>
+<script src="./portfolio.js?v=3"></script>
+<script src="./app.js?v=3"></script>
 </body>
 </html>

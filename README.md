@@ -1,19 +1,59 @@
-# Financial Path & DCA Simulator v2
+# Financial Path & DCA Simulator v3
 
-GitHub Pages向けの静的Webアプリです。外部ライブラリは使わず、ローカルCSVはブラウザ内だけで処理します。
+## 追加機能
 
-## ファイル構成
+- `simulation_data/` のprepared CSVをUIから選択して読込
+- パス・中央値・平均・信頼区間の色/太さ/透明度をUI設定
+- 近接パス透明度1 → 遠端透明度2を線形補間
+- グラフ設定をブラウザ `localStorage` に保存
+- 対数補助目盛: 2, 4, 6, 8 × 10^n
+- 積立グラフの表示上限を最終時点上側信頼限界 × 倍率で制限
+- ヒストグラムのビンをクリックすると範囲・本数・累積本数/パーセンタイルを表示
+- 前後パス本数を1つの設定欄へ統合
+- 軸表示を `10.0k` ではなく `10,000` 形式へ変更
+- 長いX軸ラベルは90度回転
 
-- `index.html` — UI / ページ構造
-- `style.css` — デザイン
-- `config.js` — 公開CSV自動読込、色、描画設定
-- `utils.js` — 共通統計・対数変換・パス選択
-- `data.js` — CSV読込、指数パス統計
-- `charts.js` — 対数時系列、ヒストグラム、信頼区間描画
-- `portfolio.js` — 積立計算と積立分布統計
-- `app.js` — 画面更新、イベント、各機能の接続
+## prepared data
 
-## 入力CSV
+GitHub Pagesの静的サイトは `simulation_data/` 内を自動列挙できません。
+そのため `simulation_data/manifest.json` に公開CSV一覧を記載します。
+
+例:
+
+```json
+{
+  "files": [
+    {
+      "file": "gbm_mu7_sigma18.csv",
+      "label": "GBM: μ=7%, σ=18%"
+    },
+    {
+      "file": "synthetic_regime_model.csv",
+      "label": "Synthetic regime model"
+    }
+  ]
+}
+```
+
+リポジトリ例:
+
+```text
+repo/
+├─ index.html
+├─ style.css
+├─ config.js
+├─ utils.js
+├─ data.js
+├─ charts.js
+├─ portfolio.js
+├─ app.js
+└─ simulation_data/
+   ├─ manifest.json
+   ├─ gbm_mu7_sigma18.csv
+   └─ synthetic_regime_model.csv
+```
+
+CSV形式:
 
 ```csv
 step,path_0,path_1,path_2
@@ -22,65 +62,22 @@ step,path_0,path_1,path_2
 2,102,98,101
 ```
 
-`path_*` は正の指数水準を想定します。
+## 設定保存
 
-## v2 の主な変更
+グラフ表示設定は `localStorage` に保存されます。
+これはGitHubリポジトリへ送信されず、そのブラウザ・そのGitHub Pages origin 内にだけ保存されます。
 
-### 1. 対数軸
+注意:
+- 同じ端末・同じブラウザでも、サイトデータを消せば設定は消えます。
+- 同じGitHub Pages origin 上の別JavaScriptからは同じlocalStorageへアクセスできるため、「暗号化された秘密領域」ではありません。機密情報は保存しないでください。
 
-- 指数時系列: Y軸 log10
-- 指数ヒストグラム: X軸 log10
-- 積立資産額時系列: Y軸 log10
-- 積立資産額ヒストグラム: X軸 log10
-- 投資元本比: Y軸 log10
-- 損益額: 負値を含むため symlog
+## 積立グラフのY軸
 
-軸ラベルは対数値ではなく、元の価格・資産額（10, 100, 1,000 ...）を表示します。
+資産額/投資元本比の上限は、最終時点の上側信頼限界 × `portfolioYCapMultiplier`（初期1.2）を目安に制限します。
+統計計算から外れ値を除外するわけではなく、表示だけをクリップします。
 
-### 2. 可変信頼区間
-
-初期値は 90%。画面上で 80%、95% などへ変更できます。
-
-例えば90%の場合:
-
-- 下限 = 経験分布の P5
-- 上限 = 経験分布の P95
-
-時系列では各stepの下限〜上限を帯で描画し、ヒストグラムでは上下限を縦線で示します。
-
-### 3. 中心パス + 前後パス
-
-中心を「CSV上の何本目か」で指定し、前後の表示本数を個別に設定できます。
-
-- 中心: 明るい紫、太線
-- 中心より前: 赤。遠いほど薄い
-- 中心より後: 青。遠いほど薄い
-
-### 4. 平均値・中央値
-
-時系列の中央値線と平均値線は、「実在する1本のパス」ではなく、各stepで全パスの中央値・平均値を計算してつないだ統計線です。
-
-ヒストグラムにも平均・中央値の縦線を表示できます。
+損益額は負値を含むためsymlogを使います。
 
 ## GitHub Pages
 
-リポジトリ直下へファイル一式を置き、Pagesを `main / (root)` にすれば利用できます。
-
-公開用ダミーCSVを自動読込する場合は `config.js`:
-
-```js
-window.CONFIG = {
-  autoLoadRemote: true,
-  remoteCsvUrl: "./data/simulation_paths.csv",
-  ...
-};
-```
-
-Pages公開領域に置いたCSVは公開データになるため、権利・機密性に問題のないデータだけを置いてください。
-
-## 統計上の注意
-
-平均値・中央値・経験分位点は **元の価格尺度** で計算しています。
-その後、描画座標だけを対数変換しています。
-
-したがって、平均値は「log価格の平均を指数変換した幾何平均」ではなく、通常の算術平均です。
+ファイル一式をリポジトリ直下に置いて `main / (root)` からPages公開できます。
