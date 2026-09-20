@@ -3,6 +3,10 @@
     {
       "file": "example_paths.csv",
       "label": "Example synthetic paths (replace or remove)"
+    },
+    {
+      "file": "Black-Scholes_price_paths_forinput(naiveparameter).csv",
+      "label": "Black-Scholes_naiveParameter"
     }
   ]
 }
