@@ -1,24 +1,19 @@
-# Financial Path & DCA Simulator
+# Financial Path & DCA Simulator v2
 
-GitHub Pages向けの静的Webアプリです。
+GitHub Pages向けの静的Webアプリです。外部ライブラリは使わず、ローカルCSVはブラウザ内だけで処理します。
 
 ## ファイル構成
 
-- `index.html` : ページ構造
-- `style.css` : デザイン
-- `config.js` : データ読込等の設定
-- `app.js` : CSV読込、描画、積立計算などの処理本体
+- `index.html` — UI / ページ構造
+- `style.css` — デザイン
+- `config.js` — 公開CSV自動読込、色、描画設定
+- `utils.js` — 共通統計・対数変換・パス選択
+- `data.js` — CSV読込、指数パス統計
+- `charts.js` — 対数時系列、ヒストグラム、信頼区間描画
+- `portfolio.js` — 積立計算と積立分布統計
+- `app.js` — 画面更新、イベント、各機能の接続
 
-## GitHub Pages
-
-リポジトリ直下に4ファイルを置き、Pagesの公開元を `main / (root)` にするとそのまま使えます。
-
-## ローカルCSV利用
-
-初期設定では `config.js` の `autoLoadRemote` が `false` です。
-ページ上部にCSVをドラッグ&ドロップしてください。
-
-CSV形式:
+## 入力CSV
 
 ```csv
 step,path_0,path_1,path_2
@@ -27,18 +22,65 @@ step,path_0,path_1,path_2
 2,102,98,101
 ```
 
-## GitHub上のCSV自動読込
+`path_*` は正の指数水準を想定します。
 
-例として `data/simulation_paths.csv` を置く場合、`config.js` を以下のように変更します。
+## v2 の主な変更
+
+### 1. 対数軸
+
+- 指数時系列: Y軸 log10
+- 指数ヒストグラム: X軸 log10
+- 積立資産額時系列: Y軸 log10
+- 積立資産額ヒストグラム: X軸 log10
+- 投資元本比: Y軸 log10
+- 損益額: 負値を含むため symlog
+
+軸ラベルは対数値ではなく、元の価格・資産額（10, 100, 1,000 ...）を表示します。
+
+### 2. 可変信頼区間
+
+初期値は 90%。画面上で 80%、95% などへ変更できます。
+
+例えば90%の場合:
+
+- 下限 = 経験分布の P5
+- 上限 = 経験分布の P95
+
+時系列では各stepの下限〜上限を帯で描画し、ヒストグラムでは上下限を縦線で示します。
+
+### 3. 中心パス + 前後パス
+
+中心を「CSV上の何本目か」で指定し、前後の表示本数を個別に設定できます。
+
+- 中心: 明るい紫、太線
+- 中心より前: 赤。遠いほど薄い
+- 中心より後: 青。遠いほど薄い
+
+### 4. 平均値・中央値
+
+時系列の中央値線と平均値線は、「実在する1本のパス」ではなく、各stepで全パスの中央値・平均値を計算してつないだ統計線です。
+
+ヒストグラムにも平均・中央値の縦線を表示できます。
+
+## GitHub Pages
+
+リポジトリ直下へファイル一式を置き、Pagesを `main / (root)` にすれば利用できます。
+
+公開用ダミーCSVを自動読込する場合は `config.js`:
 
 ```js
 window.CONFIG = {
   autoLoadRemote: true,
   remoteCsvUrl: "./data/simulation_paths.csv",
-  histogramBins: 40,
-  maxPathsForRendering: 200,
-  chartPadding: {left:72,right:18,top:16,bottom:42},
+  ...
 };
 ```
 
-Pages公開領域に置いたCSVは公開データになります。
+Pages公開領域に置いたCSVは公開データになるため、権利・機密性に問題のないデータだけを置いてください。
+
+## 統計上の注意
+
+平均値・中央値・経験分位点は **元の価格尺度** で計算しています。
+その後、描画座標だけを対数変換しています。
+
+したがって、平均値は「log価格の平均を指数変換した幾何平均」ではなく、通常の算術平均です。

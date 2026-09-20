@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Financial Path & DCA Simulator</title>
-<link rel="stylesheet" href="./style.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Financial Path & DCA Simulator</title>
+  <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
 <header>
@@ -17,34 +17,84 @@
     </div>
     <button id="reloadRemoteBtn" title="CONFIG.remoteCsvUrl が有効な場合のみ使用">GitHub CSV再読込</button>
     <span id="dataStatus" class="pill">データ未読込</span>
-    <span class="sub">処理はブラウザ内。ローカルCSVは外部送信しません。</span>
+    <span class="sub">ローカルCSVはブラウザ内だけで処理します。</span>
   </div>
 </header>
 
 <main class="wrap">
   <div id="message" class="note"></div>
 
+  <section class="card full display-settings">
+    <div class="cardhead">
+      <h2>共通表示設定</h2>
+      <span class="mini">指数・積立の両方に適用</span>
+    </div>
+    <div class="cardbody">
+      <div class="controls">
+        <label>信頼区間
+          <div class="input-with-suffix">
+            <input id="confidenceLevel" type="number" min="50" max="99.9" step="0.5" value="90" />
+            <span>%</span>
+          </div>
+        </label>
+        <label class="check-label">
+          <input id="showMedian" type="checkbox" checked />
+          <span>中央値線</span>
+        </label>
+        <label class="check-label">
+          <input id="showMean" type="checkbox" checked />
+          <span>平均値線</span>
+        </label>
+        <button id="applyDisplaySettingsBtn" class="primary">表示設定を反映</button>
+      </div>
+      <div class="note setting-note">
+        信頼区間は各stepにおける全乱数パスの経験分位点から算出します。
+        90%なら下側5%・上側5%を除いた範囲です。統計量は元の価格尺度で算出し、描画座標だけを対数変換します。
+      </div>
+    </div>
+  </section>
+
   <div class="section-title">指数パス</div>
   <div class="grid">
     <section class="card">
-      <div class="cardhead">
-        <h2>指数推移 — サンプルパス</h2>
-        <div class="controls">
-          <label>表示本数
-            <input id="indexPathCount" type="number" min="1" max="200" value="30" />
+      <div class="cardhead chart-head">
+        <div>
+          <h2>指数推移 — 選択パス</h2>
+          <div class="mini">縦軸: log10スケール / 表示値: 元の指数水準</div>
+        </div>
+        <div class="controls compact-controls">
+          <label>中心（○本目）
+            <input id="indexCenterPath" type="number" min="1" value="1" />
+          </label>
+          <label>前
+            <input id="indexBeforeCount" type="number" min="0" max="100" value="15" />
+          </label>
+          <label>後
+            <input id="indexAfterCount" type="number" min="0" max="100" value="15" />
           </label>
           <button id="redrawIndexBtn">再描画</button>
         </div>
       </div>
       <div class="cardbody">
         <canvas id="indexPathsCanvas"></canvas>
-        <div class="note">全パスから均等間隔で抽出して表示します。縦軸は指数水準、横軸はstepです。</div>
+        <div class="chart-legend">
+          <span><i class="swatch center"></i>中心パス</span>
+          <span><i class="swatch before"></i>中心より前</span>
+          <span><i class="swatch after"></i>中心より後</span>
+          <span><i class="swatch median"></i>各時点中央値</span>
+          <span><i class="swatch mean"></i>各時点平均</span>
+          <span><i class="swatch ci"></i><span id="indexCiLegend">90%区間</span></span>
+        </div>
+        <div id="indexPathSelectionNote" class="note"></div>
       </div>
     </section>
 
     <section class="card">
-      <div class="cardhead">
-        <h2>指数水準の分布</h2>
+      <div class="cardhead chart-head">
+        <div>
+          <h2>指数水準の分布</h2>
+          <div class="mini">横軸: log10スケール / ラベル: 元の指数水準</div>
+        </div>
         <div class="controls">
           <label>評価step
             <input id="indexDistStep" type="number" min="0" value="0" />
@@ -54,13 +104,18 @@
       </div>
       <div class="cardbody">
         <canvas id="indexHistCanvas"></canvas>
+        <div class="chart-legend">
+          <span><i class="swatch ci-line"></i><span id="indexHistCiLegend">信頼区間上下限</span></span>
+          <span><i class="swatch median"></i>中央値</span>
+          <span><i class="swatch mean"></i>平均値</span>
+        </div>
         <div id="indexStats" class="stats"></div>
       </div>
     </section>
   </div>
 
   <div class="section-title">積立投資シミュレーション</div>
-  <section class="card full" style="margin-bottom:16px">
+  <section class="card full dca-settings">
     <div class="cardhead">
       <h2>積立条件</h2>
       <span class="mini">為替・税・手数料・配当再投資は考慮しません</span>
@@ -82,20 +137,20 @@
             <option value="now">step 0から</option>
           </select>
         </label>
-        <label>表示本数
-          <input id="portfolioPathCount" type="number" min="1" max="200" value="30" />
-        </label>
         <button id="runPortfolioBtn" class="primary">積立を計算</button>
       </div>
-      <div id="portfolioAssumption" class="note" style="margin-top:10px"></div>
+      <div id="portfolioAssumption" class="note setting-note"></div>
     </div>
   </section>
 
   <div class="grid">
     <section class="card">
-      <div class="cardhead">
-        <h2>積立後の資産額 — サンプルパス</h2>
-        <div class="controls">
+      <div class="cardhead chart-head">
+        <div>
+          <h2>積立後の推移 — 選択パス</h2>
+          <div class="mini">資産額・投資元本比はlog10。損益額は負値対応のsymlog。</div>
+        </div>
+        <div class="controls compact-controls">
           <label>表示
             <select id="portfolioViewMode">
               <option value="value">資産額</option>
@@ -103,18 +158,39 @@
               <option value="ratio">投資元本比</option>
             </select>
           </label>
+          <label>中心（○本目）
+            <input id="portfolioCenterPath" type="number" min="1" value="1" />
+          </label>
+          <label>前
+            <input id="portfolioBeforeCount" type="number" min="0" max="100" value="15" />
+          </label>
+          <label>後
+            <input id="portfolioAfterCount" type="number" min="0" max="100" value="15" />
+          </label>
           <button id="redrawPortfolioBtn">再描画</button>
         </div>
       </div>
       <div class="cardbody">
         <canvas id="portfolioPathsCanvas"></canvas>
-        <div class="note">各購入時点の指数値で「積立額 ÷ 指数値」の口数を追加購入し、その時点の指数値で時価評価しています。</div>
+        <div class="chart-legend">
+          <span><i class="swatch center"></i>中心パス</span>
+          <span><i class="swatch before"></i>中心より前</span>
+          <span><i class="swatch after"></i>中心より後</span>
+          <span><i class="swatch median"></i>各時点中央値</span>
+          <span><i class="swatch mean"></i>各時点平均</span>
+          <span><i class="swatch ci"></i><span id="portfolioCiLegend">90%区間</span></span>
+        </div>
+        <div id="portfolioPathSelectionNote" class="note"></div>
+        <div class="note">購入日に「積立額 ÷ その日の指数値」の口数を追加し、各stepの指数値で時価評価します。</div>
       </div>
     </section>
 
     <section class="card">
-      <div class="cardhead">
-        <h2>積立後の資産額分布</h2>
+      <div class="cardhead chart-head">
+        <div>
+          <h2>積立後の資産額分布</h2>
+          <div class="mini">横軸: log10スケール / ラベル: 元の資産額</div>
+        </div>
         <div class="controls">
           <label>評価step
             <input id="portfolioDistStep" type="number" min="0" value="0" />
@@ -124,6 +200,11 @@
       </div>
       <div class="cardbody">
         <canvas id="portfolioHistCanvas"></canvas>
+        <div class="chart-legend">
+          <span><i class="swatch ci-line"></i><span id="portfolioHistCiLegend">信頼区間上下限</span></span>
+          <span><i class="swatch median"></i>中央値</span>
+          <span><i class="swatch mean"></i>平均値</span>
+        </div>
         <div id="portfolioStats" class="stats"></div>
       </div>
     </section>
@@ -135,17 +216,24 @@
       <h2>途中時点の分布サマリー</h2>
       <div class="controls">
         <label>チェックポイント（step、カンマ区切り）
-          <input id="checkpointSteps" type="text" value="252,1260,2520" style="min-width:240px" />
+          <input id="checkpointSteps" type="text" value="252,1260,2520" class="wide-input" />
         </label>
         <button id="refreshCheckpointBtn">更新</button>
       </div>
     </div>
     <div class="cardbody">
-      <div style="overflow:auto">
+      <div class="table-scroll">
         <table>
           <thead>
             <tr>
-              <th>step</th><th>投資元本</th><th>P5</th><th>P25</th><th>Median</th><th>Mean</th><th>P75</th><th>P95</th>
+              <th>step</th>
+              <th>投資元本</th>
+              <th id="checkpointLowerHead">P5</th>
+              <th>P25</th>
+              <th>Median</th>
+              <th>Mean</th>
+              <th>P75</th>
+              <th id="checkpointUpperHead">P95</th>
             </tr>
           </thead>
           <tbody id="checkpointBody"></tbody>
@@ -156,13 +244,17 @@
 
   <div class="spacer"></div>
   <p class="note">
-    将来GitHub Pages上のCSVを自動読込したい場合は、<code>config.js</code> 内の <code>CONFIG.remoteCsvUrl</code> を
-    例: <code>"./data/simulation_paths.csv"</code> に変更し、<code>CONFIG.autoLoadRemote = true</code> にしてください。
-    ローカルCSV利用時は、この設定を無効のままにすれば外部通信は発生しません。
+    GitHub Pages上の公開用CSVを自動読込する場合は、<code>config.js</code> で
+    <code>autoLoadRemote: true</code> とし、<code>remoteCsvUrl</code> に相対パスを設定してください。
+    ローカルCSV利用時は自動読込を無効のままにすれば、CSV自体の外部送信は行いません。
   </p>
 </main>
 
 <script src="./config.js"></script>
+<script src="./utils.js"></script>
+<script src="./data.js"></script>
+<script src="./charts.js"></script>
+<script src="./portfolio.js"></script>
 <script src="./app.js"></script>
 </body>
 </html>
