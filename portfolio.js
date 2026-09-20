@@ -1,69 +1,10 @@
 "use strict";
-(() => {
-  const A=window.SimApp;
-
-  A.runPortfolio=()=>{
-    if(!A.ensureData())return;
-    const initial=Math.max(0,Number(A.$("initialAmount").value)||0);
-    const interval=Math.max(1,Math.round(Number(A.$("intervalDays").value)||21));
-    const recur=Math.max(0,Number(A.$("recurringAmount").value)||0);
-    const firstNow=A.$("firstRecurring").value==="now";
-    if(initial===0&&recur===0){A.setMessage("頭金と積立額が両方0です。",true);return;}
-
-    const T=A.state.steps.length,principalByStep=new Float64Array(T);let principal=initial;
-    for(let t=0;t<T;t++){
-      const recurringToday=firstNow?(t%interval===0):(t>0&&t%interval===0);
-      if(recurringToday)principal+=recur;principalByStep[t]=principal;
-    }
-    A.state.portfolio={principalByStep,initial,interval,recur,firstNow,summaryCache:new Map()};
-    A.$("portfolioAssumption").textContent=`頭金 ${A.fmt0.format(initial)}、${interval} stepごとに ${A.fmt0.format(recur)} を積立。`+(firstNow?"step 0にも積立額を追加。":`最初の積立は step ${interval}。`);
-    A.drawPortfolioPaths();A.drawPortfolioHistogram();A.refreshCheckpointTable();
-  };
-
-  A.portfolioPath=path=>{
-    const c=A.state.portfolio,T=path.length,out=new Float64Array(T);let units=c.initial/path[0];
-    if(c.firstNow)units+=c.recur/path[0];out[0]=units*path[0];
-    for(let t=1;t<T;t++){if(t%c.interval===0)units+=c.recur/path[t];out[t]=units*path[t];}
-    return out;
-  };
-
-  A.portfolioValueAt=(path,t)=>{
-    const c=A.state.portfolio;let units=c.initial/path[0];if(c.firstNow)units+=c.recur/path[0];
-    for(let k=c.interval;k<=t;k+=c.interval)units+=c.recur/path[k];
-    return units*path[t];
-  };
-
-  A.portfolioDistributionAt=t=>{
-    const vals=new Array(A.state.paths.length);
-    for(let p=0;p<A.state.paths.length;p++)vals[p]=A.portfolioValueAt(A.state.paths[p],t);
-    return vals;
-  };
-
-  A.portfolioSeriesForMode=(vals,mode)=>{
-    const principal=A.state.portfolio.principalByStep;
-    if(mode==="profit")return Array.from(vals,(v,t)=>v-principal[t]);
-    if(mode==="ratio")return Array.from(vals,(v,t)=>principal[t]>0?v/principal[t]:NaN);
-    return Array.from(vals);
-  };
-
-  A.computePortfolioSummarySeries=mode=>{
-    const c=A.state.portfolio;if(!c)return null;
-    const {lowerQ,upperQ}=A.getConfidence(),key=`${mode}:${lowerQ}:${upperQ}`;
-    if(c.summaryCache.has(key))return c.summaryCache.get(key);
-    const P=A.state.paths.length,T=A.state.steps.length,units=new Float64Array(P),current=new Array(P);
-    const lower=new Float64Array(T),upper=new Float64Array(T),median=new Float64Array(T),mean=new Float64Array(T);
-    for(let p=0;p<P;p++){units[p]=c.initial/A.state.paths[p][0];if(c.firstNow)units[p]+=c.recur/A.state.paths[p][0];}
-    for(let t=0;t<T;t++){
-      if(t>0&&t%c.interval===0)for(let p=0;p<P;p++)units[p]+=c.recur/A.state.paths[p][t];
-      let sum=0,n=0;
-      for(let p=0;p<P;p++){
-        const value=units[p]*A.state.paths[p][t],principal=c.principalByStep[t];
-        let x=mode==="profit"?value-principal:mode==="ratio"?(principal>0?value/principal:NaN):value;
-        current[p]=x;if(Number.isFinite(x)){sum+=x;n++;}
-      }
-      const sorted=current.filter(Number.isFinite).sort((a,b)=>a-b);
-      lower[t]=A.quantile(sorted,lowerQ);upper[t]=A.quantile(sorted,upperQ);median[t]=A.quantile(sorted,.5);mean[t]=n?sum/n:NaN;
-    }
-    const out={lower,upper,median,mean,lowerQ,upperQ};c.summaryCache.set(key,out);return out;
-  };
+(()=>{const A=SimApp;
+A.autoNormalizeDca=()=>{if(!A.state.steps.length)return;const interval=Math.max(1,Math.round(Number(A.$("intervalDays").value)||21)),totalDays=A.state.steps.length,amount=A.roundSig(interval/totalDays,3);A.$("initialAmount").value="0";A.$("recurringAmount").value=String(amount);A.$("firstRecurring").value="now";A.$("portfolioAssumption").textContent=`期間総額≈1: ${interval}/${totalDays} = ${amount}`;};
+A.runPortfolio=()=>{if(!A.ensureData())return;const initial=Math.max(0,Number(A.$("initialAmount").value)||0),interval=Math.max(1,Math.round(Number(A.$("intervalDays").value)||21)),recur=Math.max(0,Number(A.$("recurringAmount").value)||0),firstNow=A.$("firstRecurring").value==="now";if(initial===0&&recur===0)return A.setMessage("頭金と積立額が両方0です。",true);const T=A.state.steps.length,pb=new Float64Array(T);let principal=initial;for(let t=0;t<T;t++){const buy=firstNow?(t%interval===0):(t>0&&t%interval===0);if(buy)principal+=recur;pb[t]=principal;}A.state.portfolio={principalByStep:pb,initial,interval,recur,firstNow,summaryCache:new Map()};A.$("portfolioAssumption").textContent=`頭金 ${A.numberLabel(initial)} / ${interval}日ごと ${A.numberLabel(recur)} / 最終元本 ${A.numberLabel(pb[T-1])}`;A.drawPortfolioPaths();A.drawPortfolioHistogram();A.refreshCheckpointTable();};
+A.portfolioPath=path=>{const c=A.state.portfolio,T=path.length,o=new Float64Array(T);let units=c.initial/path[0];if(c.firstNow)units+=c.recur/path[0];o[0]=units*path[0];for(let t=1;t<T;t++){if(t%c.interval===0)units+=c.recur/path[t];o[t]=units*path[t];}return o;};
+A.portfolioValueAt=(path,t)=>{const c=A.state.portfolio;let units=c.initial/path[0];if(c.firstNow)units+=c.recur/path[0];for(let k=c.interval;k<=t;k+=c.interval)units+=c.recur/path[k];return units*path[t];};
+A.portfolioDistributionAt=t=>A.state.paths.map(p=>A.portfolioValueAt(p,t));
+A.portfolioSeriesForMode=(vals,mode)=>{const pb=A.state.portfolio.principalByStep;if(mode==="profit")return Array.from(vals,(v,t)=>v-pb[t]);if(mode==="ratio")return Array.from(vals,(v,t)=>pb[t]>0?v/pb[t]:NaN);return Array.from(vals);};
+A.computePortfolioSummarySeries=mode=>{const c=A.state.portfolio;if(!c)return null;const{lowerQ,upperQ}=A.getConfidence(),key=`${mode}:${lowerQ}:${upperQ}`;if(c.summaryCache.has(key))return c.summaryCache.get(key);const P=A.state.paths.length,T=A.state.steps.length,units=new Float64Array(P),cur=new Array(P),l=new Float64Array(T),u=new Float64Array(T),med=new Float64Array(T),mean=new Float64Array(T);for(let p=0;p<P;p++){units[p]=c.initial/A.state.paths[p][0];if(c.firstNow)units[p]+=c.recur/A.state.paths[p][0];}for(let t=0;t<T;t++){if(t>0&&t%c.interval===0)for(let p=0;p<P;p++)units[p]+=c.recur/A.state.paths[p][t];let sum=0,n=0;for(let p=0;p<P;p++){const val=units[p]*A.state.paths[p][t],pr=c.principalByStep[t],x=mode==="profit"?val-pr:mode==="ratio"?(pr>0?val/pr:NaN):val;cur[p]=x;if(Number.isFinite(x)){sum+=x;n++;}}const s=cur.filter(Number.isFinite).sort((a,b)=>a-b);l[t]=A.quantile(s,lowerQ);u[t]=A.quantile(s,upperQ);med[t]=A.quantile(s,.5);mean[t]=n?sum/n:NaN;}const o={lower:l,upper:u,median:med,mean,lowerQ,upperQ};c.summaryCache.set(key,o);return o;};
 })();

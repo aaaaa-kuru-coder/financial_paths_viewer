@@ -1,31 +1,20 @@
 "use strict";
-
-window.CONFIG = {
-  preparedManifestUrl: "./simulation_data/manifest.json",
-  histogramBins: 42,
-  maxNeighborPathsPerSide: 100,
-  symlogLinearThreshold: 10000,
-  chartPadding: {left:86,right:24,top:18,bottom:72},
-  styleStorageKey: "financialPathSimulator.style.v3",
-  uiStorageKey: "financialPathSimulator.ui.v3"
+window.CONFIG={
+  preparedManifestUrl:"./simulation_data/manifest.json",
+  histogramBins:42,
+  maxNeighborPathsPerSide:100,
+  symlogLinearThreshold:0.001,
+  chartPadding:{left:92,right:24,top:24,bottom:74},
+  styleStorageKey:"financialPathSimulator.style.v4",
+  uiStorageKey:"financialPathSimulator.ui.v4",
+  tradingDaysPerYear:252
 };
-
-window.DEFAULT_STYLE = {
-  centerColor: "#d946ef",
-  centerWidth: 3.2,
-  beforeColor: "#ff5669",
-  afterColor: "#489bff",
-  neighborAlpha1: 0.72,
-  neighborAlpha2: 0.16,
-  neighborWidth: 1.15,
-  medianColor: "#72e6b6",
-  medianWidth: 2.1,
-  meanColor: "#ffd166",
-  meanWidth: 2.1,
-  ciColor: "#9b7bff",
-  ciAlpha: 0.16,
-  portfolioYCapMultiplier: 1.2,
-  gridColor: "#2a313d",
-  axisColor: "#aab4c2",
-  frameColor: "#465164"
+window.DEFAULT_STYLE={
+  centerColor:"#d946ef",centerWidth:3.2,centerAlpha:1,
+  beforeColor:"#ff5669",afterColor:"#489bff",neighborWidth:1.15,neighborAlpha1:.72,neighborAlpha2:.16,
+  medianColor:"#72e6b6",medianWidth:2.1,medianAlpha:1,
+  meanColor:"#ffd166",meanWidth:2.1,meanAlpha:1,
+  ciColor:"#9b7bff",ciEdgeWidth:1.1,ciFillAlpha:.16,ciEdgeAlpha:.72,
+  portfolioYCapMultiplier:1.2,
+  gridMajor:"#485466",gridMinor:"#394452",axisColor:"#c0c8d4",frameColor:"#586678"
 };

@@ -1,208 +1,160 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Financial Path & DCA Simulator v3</title>
-  <link rel="stylesheet" href="./style.css?v=3" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Financial Path & DCA Simulator v4</title>
+  <link rel="stylesheet" href="./style.css?v=4">
 </head>
 <body>
-<header>
-  <div class="wrap topbar">
-    <h1>Financial Path & DCA Simulator</h1>
-
-    <div id="dropZone" class="drop" tabindex="0">
-      <strong>CSVをドロップ / クリックして選択</strong>
-      <span>列: step, path_0, path_1, ...</span>
-      <input id="fileInput" type="file" accept=".csv,text/csv" hidden />
-    </div>
-
-    <span class="or-text">or</span>
-    <button id="preparedDataBtn" class="prepared-btn">USE prepared data</button>
-
-    <div id="preparedDataPanel" class="prepared-panel hidden">
-      <select id="preparedDataSelect">
-        <option value="">データを選択...</option>
-      </select>
-      <button id="loadPreparedDataBtn" class="primary">読み込む</button>
-      <button id="refreshPreparedDataBtn">一覧更新</button>
-    </div>
-
-    <span id="dataStatus" class="pill">データ未読込</span>
-    <span class="sub">ローカルCSVはブラウザ内だけで処理します。</span>
-  </div>
+<header class="topbar">
+  <div class="brand">Financial Path & DCA Simulator</div>
+  <div id="dataStatus" class="pill">データ未読込</div>
+  <div class="top-note">ローカルCSVはブラウザ内だけで処理します。</div>
 </header>
 
-<main class="wrap">
-  <div id="message" class="note"></div>
-
-  <section class="card full display-settings">
-    <div class="cardhead">
-      <h2>共通表示設定</h2>
-      <div class="head-actions">
-        <span class="mini">指数・積立の両方に適用</span>
-        <button id="openStyleSettingsBtn">グラフ表示設定</button>
+<div class="app-shell">
+  <aside class="sidebar">
+    <section class="side-section">
+      <h2>Data</h2>
+      <div id="dropZone" class="drop" tabindex="0">
+        <strong>CSVをドロップ / クリック</strong>
+        <span>step, path_0, path_1, ...</span>
+        <input id="fileInput" type="file" accept=".csv,text/csv" hidden>
       </div>
-    </div>
-    <div class="cardbody">
-      <div class="controls">
-        <label>信頼区間
-          <div class="input-with-suffix">
-            <input id="confidenceLevel" type="number" min="50" max="99.9" step="0.5" value="90" />
-            <span>%</span>
+
+      <button id="preparedDataBtn" class="wide-btn prepared-btn">USE prepared data ▼</button>
+      <div id="preparedDataPanel" class="prepared-panel hidden">
+        <select id="preparedDataSelect">
+          <option value="">データを選択...</option>
+        </select>
+        <div class="row-gap">
+          <button id="loadPreparedDataBtn" class="primary">読み込む</button>
+          <button id="refreshPreparedDataBtn">更新</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="side-section">
+      <h2>Path display</h2>
+
+      <label>中心シナリオ
+        <div class="stepper">
+          <button id="centerPrevBtn" title="1つ前のシナリオ">◀</button>
+          <input id="centerPath" type="number" min="1" value="1">
+          <button id="centerNextBtn" title="1つ後のシナリオ">▶</button>
+        </div>
+      </label>
+
+      <label>前後の表示本数
+        <input id="neighborCount" type="number" min="0" max="100" value="15">
+      </label>
+
+      <label>信頼区間
+        <div class="suffix-input">
+          <input id="confidenceLevel" type="number" min="50" max="99.9" step="0.5" value="90">
+          <span>%</span>
+        </div>
+      </label>
+
+      <label class="check-row">
+        <input id="showMedian" type="checkbox" checked>
+        <span>中央値ライン</span>
+      </label>
+      <label class="check-row">
+        <input id="showMean" type="checkbox" checked>
+        <span>平均値ライン</span>
+      </label>
+
+      <button id="applyPathSettingsBtn" class="wide-btn primary">表示設定を反映</button>
+      <button id="openStyleSettingsBtn" class="wide-btn">色・線設定</button>
+    </section>
+
+    <section class="side-section">
+      <h2>DCA</h2>
+      <label>頭金
+        <input id="initialAmount" type="number" min="0" step="0.00001" value="0">
+      </label>
+      <label>積立間隔（日）
+        <input id="intervalDays" type="number" min="1" step="1" value="21">
+      </label>
+      <label>1回の積立額
+        <input id="recurringAmount" type="number" min="0" step="0.00001" value="0">
+      </label>
+      <label>初回積立
+        <select id="firstRecurring">
+          <option value="now" selected>step 0から</option>
+          <option value="after">interval日後から</option>
+        </select>
+      </label>
+      <button id="autoNormalizeDcaBtn" class="wide-btn">期間総額=1へ自動設定</button>
+      <button id="runPortfolioBtn" class="wide-btn primary">積立を再計算</button>
+      <div id="portfolioAssumption" class="note"></div>
+    </section>
+
+    <section class="side-section">
+      <h2>Checkpoint</h2>
+      <label>step（カンマ区切り）
+        <input id="checkpointSteps" type="text" value="252,1260,2520">
+      </label>
+      <button id="refreshCheckpointBtn" class="wide-btn">表を更新</button>
+    </section>
+  </aside>
+
+  <main class="main-area">
+    <div id="message" class="message"></div>
+
+    <section class="section-block">
+      <div class="section-title-row">
+        <h2>指数パス</h2>
+        <span id="indexCiLegend" class="mini"></span>
+      </div>
+
+      <div class="chart-grid">
+        <article class="card">
+          <div class="cardhead">
+            <div>
+              <h3>指数推移 — 選択パス</h3>
+              <div class="mini">縦軸: 対数目盛 / 中心パスをクリックすると値を表示</div>
+            </div>
           </div>
-        </label>
-        <label class="check-label">
-          <input id="showMedian" type="checkbox" checked />
-          <span>中央値線</span>
-        </label>
-        <label class="check-label">
-          <input id="showMean" type="checkbox" checked />
-          <span>平均値線</span>
-        </label>
-        <button id="applyDisplaySettingsBtn" class="primary">表示設定を反映</button>
-      </div>
-      <div class="note setting-note">
-        信頼区間は各stepの全乱数パスの経験分位点から計算します。統計量は元の価格尺度で算出し、描画座標だけを対数変換します。
-      </div>
-    </div>
-  </section>
+          <div class="cardbody">
+            <div class="chart-wrap">
+              <canvas id="indexPathsCanvas"></canvas>
+              <div id="indexLineTooltip" class="chart-tooltip hidden"></div>
+            </div>
+            <div id="indexPathSelectionNote" class="note"></div>
+          </div>
+        </article>
 
-  <div id="styleSettingsPanel" class="settings-drawer hidden">
-    <div class="settings-drawer-inner">
-      <div class="settings-title-row">
-        <div>
-          <h2>グラフ表示設定</h2>
-          <div class="mini">このブラウザの localStorage に保存されます。他ユーザーとは共有されません。</div>
-        </div>
-        <button id="closeStyleSettingsBtn">閉じる</button>
-      </div>
-
-      <div class="settings-grid">
-        <label>中心パス色<input id="styleCenterColor" type="color" /></label>
-        <label>中心パス太さ<input id="styleCenterWidth" type="number" min="0.5" max="10" step="0.1" /></label>
-
-        <label>前側パス色<input id="styleBeforeColor" type="color" /></label>
-        <label>後側パス色<input id="styleAfterColor" type="color" /></label>
-
-        <label>近接パス透過度1<input id="styleNeighborAlpha1" type="number" min="0" max="1" step="0.05" /></label>
-        <label>遠端パス透過度2<input id="styleNeighborAlpha2" type="number" min="0" max="1" step="0.05" /></label>
-
-        <label>中央値ライン色<input id="styleMedianColor" type="color" /></label>
-        <label>中央値ライン太さ<input id="styleMedianWidth" type="number" min="0.5" max="10" step="0.1" /></label>
-
-        <label>平均値ライン色<input id="styleMeanColor" type="color" /></label>
-        <label>平均値ライン太さ<input id="styleMeanWidth" type="number" min="0.5" max="10" step="0.1" /></label>
-
-        <label>信頼区間色<input id="styleCiColor" type="color" /></label>
-        <label>信頼区間透過度<input id="styleCiAlpha" type="number" min="0" max="1" step="0.05" /></label>
-
-        <label>周辺パス太さ<input id="styleNeighborWidth" type="number" min="0.2" max="5" step="0.1" /></label>
-        <label>積立グラフ上限倍率<input id="stylePortfolioYCapMultiplier" type="number" min="1" max="5" step="0.1" /></label>
-      </div>
-
-      <div class="settings-actions">
-        <button id="saveStyleSettingsBtn" class="primary">保存して適用</button>
-        <button id="resetStyleSettingsBtn">初期値に戻す</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="section-title">指数パス</div>
-  <div class="grid">
-    <section class="card">
-      <div class="cardhead chart-head">
-        <div>
-          <h2>指数推移 — 選択パス</h2>
-          <div class="mini">縦軸: log10スケール / 表示値: 元の指数水準</div>
-        </div>
-        <div class="controls compact-controls">
-          <label>中心（○本目）
-            <input id="indexCenterPath" type="number" min="1" value="1" />
-          </label>
-          <label>前後の本数
-            <input id="indexNeighborCount" type="number" min="0" max="100" value="15" />
-          </label>
-          <button id="redrawIndexBtn">再描画</button>
-        </div>
-      </div>
-      <div class="cardbody">
-        <canvas id="indexPathsCanvas"></canvas>
-        <div class="chart-legend">
-          <span><i class="swatch center"></i>中心パス</span>
-          <span><i class="swatch before"></i>中心より前</span>
-          <span><i class="swatch after"></i>中心より後</span>
-          <span><i class="swatch median"></i>各時点中央値</span>
-          <span><i class="swatch mean"></i>各時点平均</span>
-          <span><i class="swatch ci"></i><span id="indexCiLegend">90%区間</span></span>
-        </div>
-        <div id="indexPathSelectionNote" class="note"></div>
+        <article class="card">
+          <div class="cardhead">
+            <div>
+              <h3>指数水準の分布</h3>
+              <div class="mini">ビンをクリックするとグラフ内に統計を表示</div>
+            </div>
+            <div class="inline-controls">
+              <label>評価step
+                <input id="indexDistStep" type="number" min="0" value="0">
+              </label>
+              <button id="indexFinalBtn">最終step</button>
+            </div>
+          </div>
+          <div class="cardbody">
+            <div class="chart-wrap">
+              <canvas id="indexHistCanvas"></canvas>
+              <div id="indexHistTooltip" class="chart-tooltip hidden"></div>
+            </div>
+            <div id="indexStats" class="stats"></div>
+          </div>
+        </article>
       </div>
     </section>
 
-    <section class="card">
-      <div class="cardhead chart-head">
-        <div>
-          <h2>指数水準の分布</h2>
-          <div class="mini">横軸: log10スケール / ラベル: 元の指数水準</div>
-        </div>
-        <div class="controls">
-          <label>評価step
-            <input id="indexDistStep" type="number" min="0" value="0" />
-          </label>
-          <button id="indexFinalBtn">最終step</button>
-        </div>
-      </div>
-      <div class="cardbody">
-        <canvas id="indexHistCanvas"></canvas>
-        <div class="chart-legend">
-          <span><i class="swatch ci-line"></i><span id="indexHistCiLegend">信頼区間上下限</span></span>
-          <span><i class="swatch median"></i>中央値</span>
-          <span><i class="swatch mean"></i>平均値</span>
-        </div>
-        <div id="indexHistBinInfo" class="bin-info hidden"></div>
-        <div id="indexStats" class="stats"></div>
-      </div>
-    </section>
-  </div>
-
-  <div class="section-title">積立投資シミュレーション</div>
-  <section class="card full dca-settings">
-    <div class="cardhead">
-      <h2>積立条件</h2>
-      <span class="mini">為替・税・手数料・配当再投資は考慮しません</span>
-    </div>
-    <div class="cardbody">
-      <div class="controls">
-        <label>頭金
-          <input id="initialAmount" type="number" min="0" step="10000" value="1000000" />
-        </label>
-        <label>積立間隔（日/step）
-          <input id="intervalDays" type="number" min="1" step="1" value="21" />
-        </label>
-        <label>1回あたり積立額
-          <input id="recurringAmount" type="number" min="0" step="1000" value="100000" />
-        </label>
-        <label>初回積立
-          <select id="firstRecurring">
-            <option value="after">interval日後から</option>
-            <option value="now">step 0から</option>
-          </select>
-        </label>
-        <button id="runPortfolioBtn" class="primary">積立を計算</button>
-      </div>
-      <div id="portfolioAssumption" class="note setting-note"></div>
-    </div>
-  </section>
-
-  <div class="grid">
-    <section class="card">
-      <div class="cardhead chart-head">
-        <div>
-          <h2>積立後の推移 — 選択パス</h2>
-          <div class="mini">資産額・投資元本比はlog10、0や負値を含む場合はsymlog。上限は最終時点の上側信頼限界を基準に抑制。</div>
-        </div>
-        <div class="controls compact-controls">
+    <section class="section-block">
+      <div class="section-title-row">
+        <h2>積立投資</h2>
+        <div class="inline-controls">
           <label>表示
             <select id="portfolioViewMode">
               <option value="value">資産額</option>
@@ -210,95 +162,150 @@
               <option value="ratio">投資元本比</option>
             </select>
           </label>
-          <label>中心（○本目）
-            <input id="portfolioCenterPath" type="number" min="1" value="1" />
-          </label>
-          <label>前後の本数
-            <input id="portfolioNeighborCount" type="number" min="0" max="100" value="15" />
-          </label>
-          <button id="redrawPortfolioBtn">再描画</button>
+          <span id="portfolioCiLegend" class="mini"></span>
         </div>
       </div>
-      <div class="cardbody">
-        <canvas id="portfolioPathsCanvas"></canvas>
-        <div class="chart-legend">
-          <span><i class="swatch center"></i>中心パス</span>
-          <span><i class="swatch before"></i>中心より前</span>
-          <span><i class="swatch after"></i>中心より後</span>
-          <span><i class="swatch median"></i>各時点中央値</span>
-          <span><i class="swatch mean"></i>各時点平均</span>
-          <span><i class="swatch ci"></i><span id="portfolioCiLegend">90%区間</span></span>
-        </div>
-        <div id="portfolioPathSelectionNote" class="note"></div>
+
+      <div class="chart-grid">
+        <article class="card">
+          <div class="cardhead">
+            <div>
+              <h3>積立後の推移 — 選択パス</h3>
+              <div class="mini">中心パスをクリックすると時点と値を表示</div>
+            </div>
+          </div>
+          <div class="cardbody">
+            <div class="chart-wrap">
+              <canvas id="portfolioPathsCanvas"></canvas>
+              <div id="portfolioLineTooltip" class="chart-tooltip hidden"></div>
+            </div>
+            <div id="portfolioPathSelectionNote" class="note"></div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="cardhead">
+            <div>
+              <h3>積立後の資産額分布</h3>
+              <div class="mini">中心シナリオの位置を▼で表示</div>
+            </div>
+            <div class="inline-controls">
+              <label>評価step
+                <input id="portfolioDistStep" type="number" min="0" value="0">
+              </label>
+              <button id="portfolioFinalBtn">最終step</button>
+            </div>
+          </div>
+          <div class="cardbody">
+            <div class="chart-wrap">
+              <canvas id="portfolioHistCanvas"></canvas>
+              <div id="portfolioHistTooltip" class="chart-tooltip hidden"></div>
+            </div>
+            <div id="portfolioStats" class="stats"></div>
+          </div>
+        </article>
       </div>
     </section>
 
-    <section class="card">
-      <div class="cardhead chart-head">
-        <div>
-          <h2>積立後の資産額分布</h2>
-          <div class="mini">横軸: log10スケール / ラベル: 元の資産額</div>
+    <section class="section-block">
+      <h2>チェックポイント比較</h2>
+      <div class="card">
+        <div class="cardbody table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>step</th><th>投資元本</th>
+                <th id="checkpointLowerHead">P5</th><th>P25</th>
+                <th>Median</th><th>Mean</th><th>P75</th>
+                <th id="checkpointUpperHead">P95</th>
+              </tr>
+            </thead>
+            <tbody id="checkpointBody"></tbody>
+          </table>
         </div>
-        <div class="controls">
-          <label>評価step
-            <input id="portfolioDistStep" type="number" min="0" value="0" />
-          </label>
-          <button id="portfolioFinalBtn">最終step</button>
-        </div>
-      </div>
-      <div class="cardbody">
-        <canvas id="portfolioHistCanvas"></canvas>
-        <div class="chart-legend">
-          <span><i class="swatch ci-line"></i><span id="portfolioHistCiLegend">信頼区間上下限</span></span>
-          <span><i class="swatch median"></i>中央値</span>
-          <span><i class="swatch mean"></i>平均値</span>
-        </div>
-        <div id="portfolioHistBinInfo" class="bin-info hidden"></div>
-        <div id="portfolioStats" class="stats"></div>
       </div>
     </section>
+  </main>
+</div>
+
+<div id="styleSettingsPanel" class="modal hidden">
+  <div class="modal-card">
+    <div class="modal-head">
+      <div>
+        <h2>グラフ表示設定</h2>
+        <div class="mini">このブラウザのlocalStorageに保存</div>
+      </div>
+      <button id="closeStyleSettingsBtn">閉じる</button>
+    </div>
+
+    <div class="style-table">
+      <div class="style-row style-header">
+        <div>対象</div><div>色</div><div>太さ</div><div>透過度</div>
+      </div>
+
+      <div class="style-row">
+        <div>中心選択パス</div>
+        <div class="color-slot"><input id="styleCenterColor" type="color"></div>
+        <div><input id="styleCenterWidth" type="number" min="0.5" max="10" step="0.1"></div>
+        <div><input id="styleCenterAlpha" type="number" min="0" max="1" step="0.05"></div>
+      </div>
+
+      <div class="style-row">
+        <div>周辺パス</div>
+        <div class="double-color">
+          <label>前<input id="styleBeforeColor" type="color"></label>
+          <label>後<input id="styleAfterColor" type="color"></label>
+        </div>
+        <div><input id="styleNeighborWidth" type="number" min="0.2" max="5" step="0.1"></div>
+        <div class="double-number">
+          <label>近<input id="styleNeighborAlpha1" type="number" min="0" max="1" step="0.05"></label>
+          <label>遠<input id="styleNeighborAlpha2" type="number" min="0" max="1" step="0.05"></label>
+        </div>
+      </div>
+
+      <div class="style-row">
+        <div>中央値ライン</div>
+        <div class="color-slot"><input id="styleMedianColor" type="color"></div>
+        <div><input id="styleMedianWidth" type="number" min="0.5" max="10" step="0.1"></div>
+        <div><input id="styleMedianAlpha" type="number" min="0" max="1" step="0.05"></div>
+      </div>
+
+      <div class="style-row">
+        <div>平均値ライン</div>
+        <div class="color-slot"><input id="styleMeanColor" type="color"></div>
+        <div><input id="styleMeanWidth" type="number" min="0.5" max="10" step="0.1"></div>
+        <div><input id="styleMeanAlpha" type="number" min="0" max="1" step="0.05"></div>
+      </div>
+
+      <div class="style-row">
+        <div>信頼区間</div>
+        <div class="color-slot"><input id="styleCiColor" type="color"></div>
+        <div><input id="styleCiEdgeWidth" type="number" min="0" max="5" step="0.1"></div>
+        <div class="double-number">
+          <label>塗<input id="styleCiFillAlpha" type="number" min="0" max="1" step="0.05"></label>
+          <label>縁<input id="styleCiEdgeAlpha" type="number" min="0" max="1" step="0.05"></label>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-extra">
+      <label>積立グラフ上限倍率
+        <input id="stylePortfolioYCapMultiplier" type="number" min="1" max="5" step="0.1">
+      </label>
+    </div>
+
+    <div class="modal-actions">
+      <button id="saveStyleSettingsBtn" class="primary">保存して適用</button>
+      <button id="resetStyleSettingsBtn">初期値へ戻す</button>
+    </div>
   </div>
+</div>
 
-  <div class="section-title">チェックポイント比較</div>
-  <section class="card full">
-    <div class="cardhead">
-      <h2>途中時点の分布サマリー</h2>
-      <div class="controls">
-        <label>チェックポイント（step、カンマ区切り）
-          <input id="checkpointSteps" type="text" value="252,1260,2520" class="wide-input" />
-        </label>
-        <button id="refreshCheckpointBtn">更新</button>
-      </div>
-    </div>
-    <div class="cardbody">
-      <div class="table-scroll">
-        <table>
-          <thead>
-            <tr>
-              <th>step</th><th>投資元本</th>
-              <th id="checkpointLowerHead">P5</th><th>P25</th>
-              <th>Median</th><th>Mean</th><th>P75</th>
-              <th id="checkpointUpperHead">P95</th>
-            </tr>
-          </thead>
-          <tbody id="checkpointBody"></tbody>
-        </table>
-      </div>
-    </div>
-  </section>
-
-  <div class="spacer"></div>
-  <p class="note">
-    prepared data は <code>simulation_data/manifest.json</code> に一覧を記載します。
-    GitHub Pagesの静的配信だけではフォルダ内ファイルを自動列挙できないため、このmanifest方式を採用しています。
-  </p>
-</main>
-
-<script src="./config.js?v=3"></script>
-<script src="./utils.js?v=3"></script>
-<script src="./data.js?v=3"></script>
-<script src="./charts.js?v=3"></script>
-<script src="./portfolio.js?v=3"></script>
-<script src="./app.js?v=3"></script>
+<script src="./config.js?v=4"></script>
+<script src="./utils.js?v=4"></script>
+<script src="./data.js?v=4"></script>
+<script src="./charts.js?v=4"></script>
+<script src="./portfolio.js?v=4"></script>
+<script src="./app.js?v=4"></script>
 </body>
 </html>
