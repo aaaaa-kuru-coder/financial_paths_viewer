@@ -3,92 +3,119 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Financial Path & DCA Simulator v4</title>
-  <link rel="stylesheet" href="./style.css?v=4">
+  <title>Financial Path & DCA Simulator v5</title>
+  <link rel="stylesheet" href="./style.css?v=5">
 </head>
 <body>
 <header class="topbar">
-  <div class="brand">Financial Path & DCA Simulator</div>
+  <div class="brand-block">
+    <div class="brand">Financial Path & DCA Simulator</div>
+    <div class="top-note">ローカルCSVはブラウザ内だけで処理します。</div>
+  </div>
+
   <div id="dataStatus" class="pill">データ未読込</div>
-  <div class="top-note">ローカルCSVはブラウザ内だけで処理します。</div>
+
+  <div class="top-data-area">
+    <div id="dropZone" class="drop top-drop" tabindex="0">
+      <strong>CSVをドロップ / クリック</strong>
+      <span>step, path_0, path_1, ...</span>
+      <input id="fileInput" type="file" accept=".csv,text/csv" hidden>
+    </div>
+
+    <div class="prepared-wrap">
+      <button id="preparedDataBtn" class="prepared-btn">USE prepared data ▼</button>
+      <div id="preparedDataPanel" class="prepared-panel hidden">
+        <select id="preparedDataSelect">
+          <option value="">データを選択...</option>
+        </select>
+        <button id="loadPreparedDataBtn" class="primary">読込</button>
+        <button id="refreshPreparedDataBtn">更新</button>
+      </div>
+    </div>
+  </div>
 </header>
 
 <div class="app-shell">
   <aside class="sidebar">
     <section class="side-section">
-      <h2>Data</h2>
-      <div id="dropZone" class="drop" tabindex="0">
-        <strong>CSVをドロップ / クリック</strong>
-        <span>step, path_0, path_1, ...</span>
-        <input id="fileInput" type="file" accept=".csv,text/csv" hidden>
-      </div>
-
-      <button id="preparedDataBtn" class="wide-btn prepared-btn">USE prepared data ▼</button>
-      <div id="preparedDataPanel" class="prepared-panel hidden">
-        <select id="preparedDataSelect">
-          <option value="">データを選択...</option>
-        </select>
-        <div class="row-gap">
-          <button id="loadPreparedDataBtn" class="primary">読み込む</button>
-          <button id="refreshPreparedDataBtn">更新</button>
-        </div>
-      </div>
-    </section>
-
-    <section class="side-section">
       <h2>Path display</h2>
 
-      <label>中心シナリオ
-        <div class="stepper">
-          <button id="centerPrevBtn" title="1つ前のシナリオ">◀</button>
-          <input id="centerPath" type="number" min="1" value="1">
-          <button id="centerNextBtn" title="1つ後のシナリオ">▶</button>
-        </div>
-      </label>
+      <div class="side-row side-row-path">
+        <label>中心シナリオ
+          <div class="stepper">
+            <button id="centerPrevBtn" class="step-btn" title="1つ前のシナリオ">◀</button>
+            <input id="centerPath" type="number" min="1" value="1">
+            <button id="centerNextBtn" class="step-btn" title="1つ後のシナリオ">▶</button>
+          </div>
+        </label>
 
-      <label>前後の表示本数
-        <input id="neighborCount" type="number" min="0" max="100" value="15">
-      </label>
+        <label>前後本数
+          <input id="neighborCount" type="number" min="0" max="100" value="15">
+        </label>
+      </div>
 
-      <label>信頼区間
-        <div class="suffix-input">
-          <input id="confidenceLevel" type="number" min="50" max="99.9" step="0.5" value="90">
-          <span>%</span>
-        </div>
-      </label>
+      <div class="side-row side-row-ci">
+        <label>信頼区間
+          <div class="suffix-input">
+            <input id="confidenceLevel" type="number" min="50" max="99.9" step="0.5" value="90">
+            <span>%</span>
+          </div>
+        </label>
 
-      <label class="check-row">
-        <input id="showMedian" type="checkbox" checked>
-        <span>中央値ライン</span>
-      </label>
-      <label class="check-row">
-        <input id="showMean" type="checkbox" checked>
-        <span>平均値ライン</span>
-      </label>
+        <label class="check-row compact-check">
+          <input id="showMedian" type="checkbox" checked>
+          <span>中央値</span>
+        </label>
 
-      <button id="applyPathSettingsBtn" class="wide-btn primary">表示設定を反映</button>
-      <button id="openStyleSettingsBtn" class="wide-btn">色・線設定</button>
+        <label class="check-row compact-check">
+          <input id="showMean" type="checkbox" checked>
+          <span>平均値</span>
+        </label>
+      </div>
+
+      <div class="side-button-row">
+        <button id="applyPathSettingsBtn" class="primary">表示設定を反映</button>
+        <button id="openStyleSettingsBtn">色・線設定</button>
+      </div>
     </section>
 
     <section class="side-section">
       <h2>DCA</h2>
-      <label>頭金
-        <input id="initialAmount" type="number" min="0" step="0.00001" value="0">
-      </label>
-      <label>積立間隔（日）
-        <input id="intervalDays" type="number" min="1" step="1" value="21">
-      </label>
-      <label>1回の積立額
-        <input id="recurringAmount" type="number" min="0" step="0.00001" value="0">
-      </label>
-      <label>初回積立
-        <select id="firstRecurring">
-          <option value="now" selected>step 0から</option>
-          <option value="after">interval日後から</option>
-        </select>
-      </label>
-      <button id="autoNormalizeDcaBtn" class="wide-btn">期間総額=1へ自動設定</button>
-      <button id="runPortfolioBtn" class="wide-btn primary">積立を再計算</button>
+
+      <div class="side-row side-row-dca3">
+        <label>頭金
+          <input id="initialAmount" type="number" min="0" step="0.00001" value="0">
+        </label>
+        <label>積立間隔
+          <input id="intervalDays" type="number" min="1" step="1" value="21">
+        </label>
+        <label>1回積立額
+          <input id="recurringAmount" type="number" min="0" step="0.00001" value="0">
+        </label>
+      </div>
+
+      <div class="side-row side-row-dca2">
+        <label>初回積立
+          <select id="firstRecurring">
+            <option value="now" selected>step 0から</option>
+            <option value="after">interval日後から</option>
+          </select>
+        </label>
+
+        <label>表示
+          <select id="portfolioViewMode">
+            <option value="value">資産額</option>
+            <option value="profit">損益額</option>
+            <option value="ratio">投資元本比</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="side-button-row">
+        <button id="runPortfolioBtn" class="primary">積立を再計算</button>
+        <button id="autoNormalizeDcaBtn">期間総額1へ自動設定</button>
+      </div>
+
       <div id="portfolioAssumption" class="note"></div>
     </section>
 
@@ -115,7 +142,7 @@
           <div class="cardhead">
             <div>
               <h3>指数推移 — 選択パス</h3>
-              <div class="mini">縦軸: 対数目盛 / 中心パスをクリックすると値を表示</div>
+              <div class="mini">横軸: 252営業日=1年 / 縦軸: 対数目盛</div>
             </div>
           </div>
           <div class="cardbody">
@@ -154,16 +181,7 @@
     <section class="section-block">
       <div class="section-title-row">
         <h2>積立投資</h2>
-        <div class="inline-controls">
-          <label>表示
-            <select id="portfolioViewMode">
-              <option value="value">資産額</option>
-              <option value="profit">損益額</option>
-              <option value="ratio">投資元本比</option>
-            </select>
-          </label>
-          <span id="portfolioCiLegend" class="mini"></span>
-        </div>
+        <span id="portfolioCiLegend" class="mini"></span>
       </div>
 
       <div class="chart-grid">
@@ -171,7 +189,7 @@
           <div class="cardhead">
             <div>
               <h3>積立後の推移 — 選択パス</h3>
-              <div class="mini">中心パスをクリックすると時点と値を表示</div>
+              <div class="mini">横軸: 252営業日=1年 / 中心パスをクリックすると値を表示</div>
             </div>
           </div>
           <div class="cardbody">
@@ -282,8 +300,8 @@
         <div class="color-slot"><input id="styleCiColor" type="color"></div>
         <div><input id="styleCiEdgeWidth" type="number" min="0" max="5" step="0.1"></div>
         <div class="double-number">
-          <label>塗<input id="styleCiFillAlpha" type="number" min="0" max="1" step="0.05"></label>
-          <label>縁<input id="styleCiEdgeAlpha" type="number" min="0" max="1" step="0.05"></label>
+          <label>塗り<input id="styleCiFillAlpha" type="number" min="0" max="1" step="0.05"></label>
+          <label>縁線<input id="styleCiEdgeAlpha" type="number" min="0" max="1" step="0.05"></label>
         </div>
       </div>
     </div>
@@ -301,11 +319,11 @@
   </div>
 </div>
 
-<script src="./config.js?v=4"></script>
-<script src="./utils.js?v=4"></script>
-<script src="./data.js?v=4"></script>
-<script src="./charts.js?v=4"></script>
-<script src="./portfolio.js?v=4"></script>
-<script src="./app.js?v=4"></script>
+<script src="./config.js?v=5"></script>
+<script src="./utils.js?v=5"></script>
+<script src="./data.js?v=5"></script>
+<script src="./charts.js?v=5"></script>
+<script src="./portfolio.js?v=5"></script>
+<script src="./app.js?v=5"></script>
 </body>
 </html>

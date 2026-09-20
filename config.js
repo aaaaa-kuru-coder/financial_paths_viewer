@@ -4,9 +4,9 @@ window.CONFIG={
   histogramBins:42,
   maxNeighborPathsPerSide:100,
   symlogLinearThreshold:0.001,
-  chartPadding:{left:92,right:24,top:24,bottom:74},
-  styleStorageKey:"financialPathSimulator.style.v4",
-  uiStorageKey:"financialPathSimulator.ui.v4",
+  chartPadding:{left:92,right:92,top:24,bottom:64},
+  styleStorageKey:"financialPathSimulator.style.v5",
+  uiStorageKey:"financialPathSimulator.ui.v5",
   tradingDaysPerYear:252
 };
 window.DEFAULT_STYLE={

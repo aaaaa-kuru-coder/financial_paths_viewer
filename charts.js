@@ -4,8 +4,55 @@ function makeScale(arrays,mode,domain){const tr=mode==="log"?(v=>v>0?Math.log10(
 function logTicks(s){const o=[];for(let p=Math.floor(s.min);p<=Math.ceil(s.max);p++)for(const m of[1,2,4,6,8]){const v=m*10**p,t=Math.log10(v);if(t>=s.min&&t<=s.max)o.push({t,value:v,major:m===1});}return o.sort((a,b)=>a.t-b.t);}
 function symlogTicks(s){const o=[{t:0,value:0,major:true}],max=Math.max(Math.abs(A.invSymlog(s.min)),Math.abs(A.invSymlog(s.max))),pm=Math.ceil(Math.log10(Math.max(1,max/CONFIG.symlogLinearThreshold)));for(let p=-3;p<=pm;p++)for(const m of[1,2,4,6,8])for(const sg of[-1,1]){const v=sg*m*10**p,t=A.symlog(v);if(t>=s.min&&t<=s.max)o.push({t,value:v,major:m===1});}return o.sort((a,b)=>a.t-b.t);}
 function ypx(s,v,p){const t=s.transform(v);return Number.isFinite(t)?p.y+p.h*(1-(t-s.min)/(s.max-s.min)):NaN;}
-function drawY(ctx,p,s){const ticks=s.mode==="log"?logTicks(s):s.mode==="symlog"?symlogTicks(s):[];ctx.font="11px system-ui";for(const tk of ticks){const y=p.y+p.h*(1-(tk.t-s.min)/(s.max-s.min));ctx.strokeStyle=tk.major?A.style.gridMajor:A.style.gridMinor;ctx.lineWidth=tk.major?1.15:.8;ctx.beginPath();ctx.moveTo(p.x,y);ctx.lineTo(p.x+p.w,y);ctx.stroke();ctx.fillStyle=tk.major?A.style.axisColor:"rgba(192,200,212,.72)";ctx.font=tk.major?"11px system-ui":"9px system-ui";ctx.textAlign="right";ctx.textBaseline="middle";ctx.fillText(A.numberLabel(tk.value),p.x-8,y);}}
-function drawX(ctx,p,xv){const n=xv.length;ctx.font="10px system-ui";for(let k=0;k<=5;k++){const i=Math.round(k*(n-1)/5),x=p.x+p.w*i/Math.max(1,n-1);ctx.strokeStyle=A.style.gridMajor;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,p.y);ctx.lineTo(x,p.y+p.h);ctx.stroke();ctx.save();ctx.translate(x,p.y+p.h+9);ctx.rotate(-Math.PI/2);ctx.fillStyle=A.style.axisColor;ctx.textAlign="right";ctx.textBaseline="middle";ctx.fillText(String(xv[i]??i),0,0);ctx.restore();}}
+function drawY(ctx,p,s){
+  const ticks=s.mode==="log"?logTicks(s):s.mode==="symlog"?symlogTicks(s):[];
+  for(const tk of ticks){
+    const y=p.y+p.h*(1-(tk.t-s.min)/(s.max-s.min));
+    ctx.strokeStyle=tk.major?A.style.gridMajor:A.style.gridMinor;
+    ctx.lineWidth=tk.major?1.15:.8;
+    ctx.beginPath();ctx.moveTo(p.x,y);ctx.lineTo(p.x+p.w,y);ctx.stroke();
+
+    const label=A.numberLabel(tk.value);
+    ctx.fillStyle=tk.major?A.style.axisColor:"rgba(192,200,212,.72)";
+    ctx.font=tk.major?"11px system-ui":"9px system-ui";
+    ctx.textBaseline="middle";
+
+    ctx.textAlign="right";
+    ctx.fillText(label,p.x-8,y);
+
+    ctx.textAlign="left";
+    ctx.fillText(label,p.x+p.w+8,y);
+  }
+}
+function drawX(ctx,p,xv){
+  if(!xv?.length)return;
+  const first=Number(xv[0]??0),last=Number(xv[xv.length-1]??(xv.length-1));
+  const totalDays=Math.max(0,last-first);
+  const totalYears=totalDays/CONFIG.tradingDaysPerYear;
+  const intervalYears=totalYears>=5?5:1;
+  const marks=[0];
+  for(let y=intervalYears;y<=totalYears+1e-9;y+=intervalYears)marks.push(y);
+
+  // 最終年が刻みから大きく外れる場合だけ末尾も表示
+  if(totalYears>0 && totalYears-marks[marks.length-1] >= intervalYears*.45) marks.push(totalYears);
+
+  ctx.font="10px system-ui";
+  for(const years of marks){
+    const targetDay=first+years*CONFIG.tradingDaysPerYear;
+    const ratio=totalDays>0?(targetDay-first)/totalDays:0;
+    const x=p.x+p.w*A.clamp(ratio,0,1);
+
+    ctx.strokeStyle=A.style.gridMajor;
+    ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(x,p.y);ctx.lineTo(x,p.y+p.h);ctx.stroke();
+
+    const roundedYears=Math.abs(years-Math.round(years))<1e-8?Math.round(years):Number(years.toFixed(1));
+    ctx.fillStyle=A.style.axisColor;
+    ctx.textAlign="center";
+    ctx.textBaseline="top";
+    ctx.fillText(`${roundedYears}年`,x,p.y+p.h+10);
+  }
+}
 function placeTooltip(el,x,y,html,wrap){el.innerHTML=html;el.classList.remove("hidden");requestAnimationFrame(()=>{const w=el.offsetWidth,h=el.offsetHeight,r=wrap.getBoundingClientRect();let left=A.clamp(x-w/2,4,r.width-w-4),top=y-h-12;if(top<4)top=y+12;el.style.left=`${left}px`;el.style.top=`${A.clamp(top,4,r.height-h-4)}px`;});}
 A.drawPathChart=(canvas,series,opts={})=>{const{ctx,w,h}=A.resizeCanvas(canvas),pad=CONFIG.chartPadding,p={x:pad.left,y:pad.top,w:w-pad.left-pad.right,h:h-pad.top-pad.bottom};ctx.clearRect(0,0,w,h);const arrays=series.map(s=>s.values);if(opts.band)arrays.push(opts.band.lower,opts.band.upper);if(opts.median)arrays.push(opts.median);if(opts.mean)arrays.push(opts.mean);if(opts.reference)arrays.push(opts.reference);let mode=opts.scaleMode||"log";if(mode==="log"&&arrays.some(ar=>Array.from(ar).some(v=>Number.isFinite(v)&&v<=0)))mode="symlog";const scale=makeScale(arrays,mode,opts.domainOriginal);if(!scale)return;drawY(ctx,p,scale);drawX(ctx,p,opts.xValues);ctx.save();ctx.beginPath();ctx.rect(p.x,p.y,p.w,p.h);ctx.clip();
 if(opts.band){const n=opts.band.lower.length;ctx.beginPath();let st=false;for(let i=0;i<n;i++){const x=p.x+p.w*i/Math.max(1,n-1),y=ypx(scale,opts.band.upper[i],p);if(!Number.isFinite(y))continue;if(!st){ctx.moveTo(x,y);st=true}else ctx.lineTo(x,y);}for(let i=n-1;i>=0;i--){const x=p.x+p.w*i/Math.max(1,n-1),y=ypx(scale,opts.band.lower[i],p);if(Number.isFinite(y))ctx.lineTo(x,y);}ctx.closePath();ctx.fillStyle=A.rgba(A.style.ciColor,A.style.ciFillAlpha);ctx.fill();for(const ar of[opts.band.lower,opts.band.upper]){ctx.beginPath();st=false;for(let i=0;i<n;i++){const x=p.x+p.w*i/Math.max(1,n-1),y=ypx(scale,ar[i],p);if(!Number.isFinite(y))continue;if(!st){ctx.moveTo(x,y);st=true}else ctx.lineTo(x,y);}ctx.strokeStyle=A.rgba(A.style.ciColor,A.style.ciEdgeAlpha);ctx.lineWidth=A.style.ciEdgeWidth;ctx.stroke();}}
