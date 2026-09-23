@@ -11,6 +11,10 @@
     {
       "file": "meanReversionModel_price_paths_forinput(naiveparameter).csv",
       "label": "Mean-Reversion_naiveParameter"
+    },
+    {
+      "file": "Black-Scholes_price_paths_forPhone(naiveparameter).csv",
+      "label": "(Phone)Black-Scholes_naiveParameter"
     }
 
 
