@@ -1,8 +1,8 @@
-# Financial Path & DCA Simulator v6
+# Financial Path & DCA Simulator v7
 
 v5を基に、時間粒度切替・分布比較・設定UIを改善した版です。
 
-## v6 主な変更
+## v7 主な変更
 
 - 「1年あたりstep数」をグラフ表示設定から変更可能（既定値252）。
 - CSVの有効データ行が1,000行以下なら月次粒度とみなし、自動で `12 step = 1年`、DCA積立間隔を `1 step` に設定。
@@ -31,3 +31,9 @@ v5を基に、時間粒度切替・分布比較・設定UIを改善した版で�
 ```
 
 GitHub Pagesへは本ZIP内のファイル一式をそのまま配置できます。
+
+
+## v7 changes
+- CSV initial-load performance: reuse selected/final histogram distributions, cache index/DCA distributions, and capture final/checkpoint DCA distributions during the existing summary sweep.
+- Both index and DCA histogram step inputs now redraw live (debounced) and always show the selected step in blue over the final-step purple background.
+- Enlarged sidebar input/label text and numeric text in the appearance settings panel.
