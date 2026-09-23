@@ -24,4 +24,6 @@ A.loadJsonStorage=(k,f)=>{try{const r=localStorage.getItem(k);return r?{...struc
 A.saveJsonStorage=(k,o)=>{try{localStorage.setItem(k,JSON.stringify(o));}catch(e){console.warn(e);}};
 A.roundSig=(x,sig=3)=>{if(!Number.isFinite(x)||x===0)return x;return Number(x.toPrecision(sig));};
 A.style=A.loadJsonStorage(CONFIG.styleStorageKey,DEFAULT_STYLE);
+A.ui=A.loadJsonStorage(CONFIG.uiStorageKey,DEFAULT_UI);
+A.getStepsPerYear=()=>Math.max(1,Math.round(Number(A.ui.stepsPerYear)||CONFIG.defaultStepsPerYear));
 })();

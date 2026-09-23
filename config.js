@@ -5,9 +5,12 @@ window.CONFIG={
   maxNeighborPathsPerSide:100,
   symlogLinearThreshold:0.001,
   chartPadding:{left:92,right:92,top:24,bottom:64},
-  styleStorageKey:"financialPathSimulator.style.v5",
-  uiStorageKey:"financialPathSimulator.ui.v5",
-  tradingDaysPerYear:252
+  styleStorageKey:"financialPathSimulator.style.v6",
+  uiStorageKey:"financialPathSimulator.ui.v6",
+  defaultStepsPerYear:252,
+  monthlyStepsPerYear:12,
+  monthlyRowThreshold:1000,
+  defaultDcaInterval:21
 };
 window.DEFAULT_STYLE={
   centerColor:"#d946ef",centerWidth:3.2,centerAlpha:1,
@@ -18,3 +21,4 @@ window.DEFAULT_STYLE={
   portfolioYCapMultiplier:1.2,
   gridMajor:"#485466",gridMinor:"#394452",axisColor:"#c0c8d4",frameColor:"#586678"
 };
+window.DEFAULT_UI={stepsPerYear:252};

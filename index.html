@@ -3,8 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Financial Path & DCA Simulator v5</title>
-  <link rel="stylesheet" href="./style.css?v=5">
+  <meta name="theme-color" content="#0f1115">
+  <title>Financial Path & DCA Simulator v6</title>
+  <link rel="icon" href="./icons/favicon.ico" sizes="any">
+  <link rel="icon" href="./icons/app-icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="stylesheet" href="./style.css?v=6">
 </head>
 <body>
 <header class="topbar">
@@ -40,7 +45,7 @@
     <section class="side-section">
       <h2>Path display</h2>
 
-      <div class="side-row side-row-path">
+      <div class="side-row side-row-path3">
         <label>中心シナリオ
           <div class="stepper">
             <button id="centerPrevBtn" class="step-btn" title="1つ前のシナリオ">◀</button>
@@ -52,16 +57,16 @@
         <label>前後本数
           <input id="neighborCount" type="number" min="0" max="100" value="15">
         </label>
-      </div>
 
-      <div class="side-row side-row-ci">
         <label>信頼区間
           <div class="suffix-input">
             <input id="confidenceLevel" type="number" min="50" max="99.9" step="0.5" value="90">
             <span>%</span>
           </div>
         </label>
+      </div>
 
+      <div class="side-row side-row-path-actions">
         <label class="check-row compact-check">
           <input id="showMedian" type="checkbox" checked>
           <span>中央値</span>
@@ -71,34 +76,39 @@
           <input id="showMean" type="checkbox" checked>
           <span>平均値</span>
         </label>
+
+        <button id="applyPathSettingsBtn" class="primary">表示設定を反映</button>
       </div>
 
-      <div class="side-button-row">
-        <button id="applyPathSettingsBtn" class="primary">表示設定を反映</button>
-        <button id="openStyleSettingsBtn">色・線設定</button>
-      </div>
+      <label>指数分布 評価step
+        <div class="step-final-input">
+          <input id="indexDistStep" type="number" min="0" value="0">
+          <button id="indexFinalBtn">最終</button>
+        </div>
+      </label>
     </section>
 
     <section class="side-section">
       <h2>DCA</h2>
 
-      <div class="side-row side-row-dca3">
+      <div class="side-row side-row-dca4">
         <label>頭金
           <input id="initialAmount" type="number" min="0" step="0.00001" value="0">
         </label>
-        <label>積立間隔
+        <label>積立間隔(step)
           <input id="intervalDays" type="number" min="1" step="1" value="21">
         </label>
         <label>1回積立額
           <input id="recurringAmount" type="number" min="0" step="0.00001" value="0">
         </label>
+        <button id="autoNormalizeDcaBtn">期間総額1へ自動設定</button>
       </div>
 
-      <div class="side-row side-row-dca2">
+      <div class="side-row side-row-dca4">
         <label>初回積立
           <select id="firstRecurring">
             <option value="now" selected>step 0から</option>
-            <option value="after">interval日後から</option>
+            <option value="after">interval step後から</option>
           </select>
         </label>
 
@@ -109,22 +119,23 @@
             <option value="ratio">投資元本比</option>
           </select>
         </label>
-      </div>
 
-      <div class="side-button-row">
+        <label>評価step
+          <div class="step-final-input">
+            <input id="portfolioDistStep" type="number" min="0" value="0">
+            <button id="portfolioFinalBtn">最終</button>
+          </div>
+        </label>
+
         <button id="runPortfolioBtn" class="primary">積立を再計算</button>
-        <button id="autoNormalizeDcaBtn">期間総額1へ自動設定</button>
       </div>
 
       <div id="portfolioAssumption" class="note"></div>
     </section>
 
-    <section class="side-section">
-      <h2>Checkpoint</h2>
-      <label>step（カンマ区切り）
-        <input id="checkpointSteps" type="text" value="252,1260,2520">
-      </label>
-      <button id="refreshCheckpointBtn" class="wide-btn">表を更新</button>
+    <section class="side-section visual-settings-section">
+      <h2>Appearance</h2>
+      <button id="openStyleSettingsBtn" class="wide-btn">色・線・時間軸設定</button>
     </section>
   </aside>
 
@@ -142,7 +153,7 @@
           <div class="cardhead">
             <div>
               <h3>指数推移 — 選択パス</h3>
-              <div class="mini">横軸: 252営業日=1年 / 縦軸: 対数目盛</div>
+              <div id="indexAxisNote" class="mini">横軸: 252 step=1年 / 縦軸: 対数目盛</div>
             </div>
           </div>
           <div class="cardbody">
@@ -158,13 +169,7 @@
           <div class="cardhead">
             <div>
               <h3>指数水準の分布</h3>
-              <div class="mini">ビンをクリックするとグラフ内に統計を表示</div>
-            </div>
-            <div class="inline-controls">
-              <label>評価step
-                <input id="indexDistStep" type="number" min="0" value="0">
-              </label>
-              <button id="indexFinalBtn">最終step</button>
+              <div class="mini">青: 選択step / 紫枠: 最終step（常時表示）</div>
             </div>
           </div>
           <div class="cardbody">
@@ -189,7 +194,7 @@
           <div class="cardhead">
             <div>
               <h3>積立後の推移 — 選択パス</h3>
-              <div class="mini">横軸: 252営業日=1年 / 中心パスをクリックすると値を表示</div>
+              <div id="portfolioAxisNote" class="mini">横軸: 252 step=1年 / 中心パスをクリックすると値を表示</div>
             </div>
           </div>
           <div class="cardbody">
@@ -205,13 +210,7 @@
           <div class="cardhead">
             <div>
               <h3>積立後の資産額分布</h3>
-              <div class="mini">中心シナリオの位置を▼で表示</div>
-            </div>
-            <div class="inline-controls">
-              <label>評価step
-                <input id="portfolioDistStep" type="number" min="0" value="0">
-              </label>
-              <button id="portfolioFinalBtn">最終step</button>
+              <div class="mini">青: 選択step / 紫枠: 最終step / ▼: 中心シナリオ</div>
             </div>
           </div>
           <div class="cardbody">
@@ -227,6 +226,7 @@
 
     <section class="section-block">
       <h2>チェックポイント比較</h2>
+      <div class="mini checkpoint-note">1年・5年・10年相当を、現在の「1年あたりstep数」から自動設定します。</div>
       <div class="card">
         <div class="cardbody table-scroll">
           <table>
@@ -306,9 +306,12 @@
       </div>
     </div>
 
-    <div class="modal-extra">
+    <div class="modal-extra modal-extra-grid">
       <label>積立グラフ上限倍率
         <input id="stylePortfolioYCapMultiplier" type="number" min="1" max="5" step="0.1">
+      </label>
+      <label>1年あたりstep数
+        <input id="stepsPerYear" type="number" min="1" step="1" value="252">
       </label>
     </div>
 
@@ -319,11 +322,11 @@
   </div>
 </div>
 
-<script src="./config.js?v=5"></script>
-<script src="./utils.js?v=5"></script>
-<script src="./data.js?v=5"></script>
-<script src="./charts.js?v=5"></script>
-<script src="./portfolio.js?v=5"></script>
-<script src="./app.js?v=5"></script>
+<script src="./config.js?v=6"></script>
+<script src="./utils.js?v=6"></script>
+<script src="./data.js?v=6"></script>
+<script src="./charts.js?v=6"></script>
+<script src="./portfolio.js?v=6"></script>
+<script src="./app.js?v=6"></script>
 </body>
 </html>

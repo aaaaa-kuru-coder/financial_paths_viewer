@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <clipPath id="orb"><circle cx="256" cy="246" r="205"/></clipPath>
+    <radialGradient id="glass" cx="38%" cy="28%" r="72%"><stop offset="0" stop-color="#263142"/><stop offset="0.58" stop-color="#10151d"/><stop offset="1" stop-color="#05070b"/></radialGradient>
+    <linearGradient id="band" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8b5cf6" stop-opacity=".08"/><stop offset="1" stop-color="#a78bfa" stop-opacity=".52"/></linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="#07090d"/>
+  <circle cx="256" cy="246" r="218" fill="#0a0d13" stroke="#596579" stroke-width="12"/>
+  <g clip-path="url(#orb)">
+    <rect x="35" y="25" width="442" height="442" fill="url(#glass)"/>
+    <g stroke="#2b3442" stroke-width="3" opacity=".85">
+      <path d="M55 95H457M55 145H457M55 195H457M55 245H457M55 295H457M55 345H457M55 395H457"/>
+      <path d="M95 45V447M145 45V447M195 45V447M245 45V447M295 45V447M345 45V447M395 45V447"/>
+    </g>
+    <path d="M78 345 C118 324 135 314 158 292 C190 261 215 278 245 247 C286 205 329 170 438 125 L438 382 C337 360 286 343 245 326 C202 309 151 326 78 365 Z" fill="url(#band)"/>
+    <path d="M74 330 L119 300 L153 316 L194 246 L235 269 L279 201 L321 221 L357 151 L397 177 L443 109" fill="none" stroke="#ff4f64" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="443" cy="109" r="11" fill="#ff6a7a"/>
+    <ellipse cx="196" cy="116" rx="74" ry="35" fill="#ffffff" opacity=".07" transform="rotate(-22 196 116)"/>
+  </g>
+  <path d="M155 454H357L391 490H121Z" fill="#171d28" stroke="#596579" stroke-width="8" stroke-linejoin="round"/>
+</svg>
