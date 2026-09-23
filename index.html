@@ -4,12 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0f1115">
-  <title>Financial Path & DCA Simulator v7</title>
+  <title>Financial Path & DCA Simulator v8</title>
   <link rel="icon" href="./icons/favicon.ico" sizes="any">
   <link rel="icon" href="./icons/app-icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="./icons/icon-192.png">
   <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="stylesheet" href="./style.css?v=7">
+  <link rel="stylesheet" href="./style.css?v=8">
 </head>
 <body>
 <header class="topbar">
@@ -80,10 +80,10 @@
         <button id="applyPathSettingsBtn" class="primary">表示設定を反映</button>
       </div>
 
-      <label>指数分布 評価step
+      <label>ヒストグラム 評価step（指数・積立 共通）
         <div class="step-final-input">
-          <input id="indexDistStep" type="number" min="0" value="0">
-          <button id="indexFinalBtn">最終</button>
+          <input id="distStep" type="number" min="0" value="0">
+          <button id="distFinalBtn">最終</button>
         </div>
       </label>
     </section>
@@ -104,7 +104,7 @@
         <button id="autoNormalizeDcaBtn">期間総額1へ自動設定</button>
       </div>
 
-      <div class="side-row side-row-dca4">
+      <div class="side-row side-row-dca3">
         <label>初回積立
           <select id="firstRecurring">
             <option value="now" selected>step 0から</option>
@@ -118,13 +118,6 @@
             <option value="profit">損益額</option>
             <option value="ratio">投資元本比</option>
           </select>
-        </label>
-
-        <label>評価step
-          <div class="step-final-input">
-            <input id="portfolioDistStep" type="number" min="0" value="0">
-            <button id="portfolioFinalBtn">最終</button>
-          </div>
         </label>
 
         <button id="runPortfolioBtn" class="primary">積立を再計算</button>
@@ -322,11 +315,11 @@
   </div>
 </div>
 
-<script src="./config.js?v=7"></script>
-<script src="./utils.js?v=7"></script>
-<script src="./data.js?v=7"></script>
-<script src="./charts.js?v=7"></script>
-<script src="./portfolio.js?v=7"></script>
-<script src="./app.js?v=7"></script>
+<script src="./config.js?v=8"></script>
+<script src="./utils.js?v=8"></script>
+<script src="./data.js?v=8"></script>
+<script src="./charts.js?v=8"></script>
+<script src="./portfolio.js?v=8"></script>
+<script src="./app.js?v=8"></script>
 </body>
 </html>
