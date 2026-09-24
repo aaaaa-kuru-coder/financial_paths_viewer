@@ -1,8 +1,8 @@
-# Financial Path & DCA Simulator v8
+# Financial Path & DCA Simulator v9
 
 v5を基に、時間粒度切替・分布比較・設定UIを改善した版です。
 
-## v8 主な変更
+## v9 主な変更
 
 - 「1年あたりstep数」をグラフ表示設定から変更可能（既定値252）。
 - CSVの有効データ行が1,000行以下なら月次粒度とみなし、自動で `12 step = 1年`、DCA積立間隔を `1 step` に設定。
@@ -39,10 +39,17 @@ GitHub Pagesへは本ZIP内のファイル一式をそのまま配置できま�
 - Enlarged sidebar input/label text and numeric text in the appearance settings panel.
 
 
-## v8 performance changes
+## v9 performance changes
 - Histogram evaluation step is shared by index and DCA; changing it redraws both histograms together.
 - Initial step remains the final step after CSV load. Intermediate-step distributions are calculated only when the user selects another step.
 - When selected step equals the final step, the purple background histogram reuses the same log values and bin counts as the blue histogram instead of aggregating them twice.
 - Histogram summary statistics reuse the already-computed full-series summary instead of sorting the final distribution again.
 - DCA checkpoint table (1/5/10 years) reuses P25/P75/median/mean/CI values produced during the existing DCA summary sweep, eliminating separate checkpoint distribution sorts on initial load.
 - <=1,000-row monthly auto-detection behavior remains unchanged.
+
+
+## v9 mobile chart layout
+- Smartphone chart padding is now responsive instead of fixed at 92 px on both sides.
+- On charts <=480 px wide, right-side Y-axis labels are omitted to maximize plotting width; left-side labels remain.
+- Removed the former artificial 320 px minimum drawing width, so canvas drawing coordinates match the real CSS width on narrow devices.
+- Reduced card/main padding only on mobile. Desktop layout and desktop chart padding are unchanged.
