@@ -49,7 +49,7 @@ GitHub Pagesへは本ZIP内のファイル一式をそのまま配置できま�
 
 
 ## v9 mobile chart layout
-- Smartphone chart padding is now responsive instead of fixed at 92 px on both sides.
-- On charts <=480 px wide, right-side Y-axis labels are omitted to maximize plotting width; left-side labels remain.
-- Removed the former artificial 320 px minimum drawing width, so canvas drawing coordinates match the real CSS width on narrow devices.
-- Reduced card/main padding only on mobile. Desktop layout and desktop chart padding are unchanged.
+- Narrow-screen chart padding is adaptive instead of fixed at 92 px on both sides.
+- Canvas logical width now follows the rendered width instead of forcing a 320 px minimum.
+- Mobile card/main padding is reduced so charts use more of the phone screen width.
+- Desktop chart padding remains unchanged.

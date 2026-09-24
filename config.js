@@ -5,8 +5,6 @@ window.CONFIG={
   maxNeighborPathsPerSide:100,
   symlogLinearThreshold:0.001,
   chartPadding:{left:92,right:92,top:24,bottom:64},
-  mobileChartPadding:{left:54,right:12,top:20,bottom:56},
-  compactChartPadding:{left:64,right:22,top:22,bottom:58},
   styleStorageKey:"financialPathSimulator.style.v7",
   uiStorageKey:"financialPathSimulator.ui.v7",
   defaultStepsPerYear:252,
