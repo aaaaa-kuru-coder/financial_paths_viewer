@@ -48,8 +48,8 @@ GitHub Pagesへは本ZIP内のファイル一式をそのまま配置できま�
 - <=1,000-row monthly auto-detection behavior remains unchanged.
 
 
-## v9 mobile chart layout
-- Narrow-screen chart padding is adaptive instead of fixed at 92 px on both sides.
-- Canvas logical width now follows the rendered width instead of forcing a 320 px minimum.
-- Mobile card/main padding is reduced so charts use more of the phone screen width.
-- Desktop chart padding remains unchanged.
+## v9 mobile chart layout fix
+- On narrow screens, chart padding is reduced from 92px per side to 54px on the left and 16px on the right so the actual plot uses substantially more of the screen width.
+- On mobile, duplicate right-side Y-axis labels are omitted so the plot can use more horizontal space.
+- Canvas backing width now follows the real CSS width instead of forcing a minimum width of 320px.
+- Mobile-only outer/card padding is slightly reduced; desktop layout is unchanged.

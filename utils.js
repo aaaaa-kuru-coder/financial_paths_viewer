@@ -13,7 +13,8 @@ A.numberLabel=v=>{if(!Number.isFinite(v))return"—";const av=Math.abs(v);if(av>
 A.percentDisplay=p=>{const pct=100*p;return (pct<=10||pct>=90)?`${pct.toFixed(1)}%`:`${Math.round(pct)}%`;};
 A.percentLabel=q=>{const p=q*100;return`P${Number.isInteger(p)?p:p.toFixed(2).replace(/0+$/,"").replace(/\.$/,"")}`;};
 A.setMessage=(m,e=false)=>{const el=A.$("message");el.textContent=m;el.className=e?"message error":"message";};
-A.resizeCanvas=canvas=>{const dpr=devicePixelRatio||1,r=canvas.getBoundingClientRect(),w=Math.max(180,Math.floor(r.width)),h=Math.max(220,Math.floor(r.height));if(canvas.width!==Math.floor(w*dpr)||canvas.height!==Math.floor(h*dpr)){canvas.width=Math.floor(w*dpr);canvas.height=Math.floor(h*dpr);}const ctx=canvas.getContext("2d");ctx.setTransform(dpr,0,0,dpr,0,0);return{ctx,w,h};};
+A.resizeCanvas=canvas=>{const dpr=devicePixelRatio||1,r=canvas.getBoundingClientRect(),w=Math.max(1,Math.floor(r.width)),h=Math.max(220,Math.floor(r.height));if(canvas.width!==Math.floor(w*dpr)||canvas.height!==Math.floor(h*dpr)){canvas.width=Math.floor(w*dpr);canvas.height=Math.floor(h*dpr);}const ctx=canvas.getContext("2d");ctx.setTransform(dpr,0,0,dpr,0,0);return{ctx,w,h};};
+A.getChartPadding=w=>w<=CONFIG.mobileChartBreakpoint?CONFIG.chartPaddingMobile:CONFIG.chartPadding;
 A.symlog=(v,lin=window.CONFIG.symlogLinearThreshold)=>Number.isFinite(v)?Math.sign(v)*Math.log10(1+Math.abs(v)/lin):NaN;
 A.invSymlog=(y,lin=window.CONFIG.symlogLinearThreshold)=>Number.isFinite(y)?Math.sign(y)*lin*(10**Math.abs(y)-1):NaN;
 A.makeSelectedPathIndices=(centerOneBased,n,total)=>{const center=A.clamp(Math.round(centerOneBased)-1,0,total-1),nn=A.clamp(Math.round(n)||0,0,CONFIG.maxNeighborPathsPerSide),lo=Math.max(0,center-nn),hi=Math.min(total-1,center+nn),ids=[];for(let i=lo;i<=hi;i++)ids.push(i);return{center,lo,hi,ids};};
@@ -27,5 +28,3 @@ A.style=A.loadJsonStorage(CONFIG.styleStorageKey,DEFAULT_STYLE);
 A.ui=A.loadJsonStorage(CONFIG.uiStorageKey,DEFAULT_UI);
 A.getStepsPerYear=()=>Math.max(1,Math.round(Number(A.ui.stepsPerYear)||CONFIG.defaultStepsPerYear));
 })();
-
-A.chartPaddingForWidth=w=>{const base=CONFIG.chartPadding;if(w<=420)return{left:50,right:14,top:18,bottom:52};if(w<=640)return{left:60,right:20,top:20,bottom:56};if(w<=900)return{left:74,right:36,top:22,bottom:60};return base;};
